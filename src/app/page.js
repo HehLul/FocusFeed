@@ -42,17 +42,17 @@ export default function Home() {
           <div className="text-2xl font-bold">FocusFeed</div>
           <div className="space-x-4">
             <button 
-              className="text-white bg-transparent border border-white px-4 py-2 rounded"
+              className="text-white bg-transparent border border-white px-6 py-2   rounded"
               onClick={() => setIsSignupOpen(true)}
             >
               Log in
             </button>
-            <button 
+            {/* <button 
               className="text-black bg-white px-4 py-2 rounded"
               onClick={() => setIsSignupOpen(true)}
             >
               Sign up
-            </button>
+            </button> */}
           </div>
         </div>
       </nav>
