@@ -1,7 +1,9 @@
 "use client";
-
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import SignupModal from '../../components/SignupModal';
+import LoadingFeedAnimation from '../../components/LoadingFeedAnimation';
+import { supabase } from '../../utils/supabase';
 
 export default function ChannelSetup() {
   const router = useRouter();
@@ -10,11 +12,12 @@ export default function ChannelSetup() {
   const [selectedChannels, setSelectedChannels] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showSignup, setShowSignup] = useState(false);
+  const [isCurating, setIsCurating] = useState(false);
 
   // Improved thumbnail selection function
   const getChannelThumbnail = (channel) => {
     const defaultThumbnail = '/default-channel-thumbnail.png';
-
     try {
       const thumbnails = channel.snippet?.thumbnails;
       
@@ -24,7 +27,6 @@ export default function ChannelSetup() {
         if (thumbnails.medium) return thumbnails.medium.url;
         if (thumbnails.default) return thumbnails.default.url;
       }
-
       return defaultThumbnail;
     } catch (error) {
       console.error('Thumbnail selection error:', error);
@@ -41,7 +43,6 @@ export default function ChannelSetup() {
         setSearchResults([]);
       }
     }, 500);
-
     return () => clearTimeout(delayDebounceFn);
   }, [searchTerm]);
 
@@ -56,7 +57,6 @@ export default function ChannelSetup() {
       const channelResults = data.items.filter(item => 
         item.id.kind === 'youtube#channel'
       );
-
       // Process channels
       const processedChannels = channelResults.map((channel, index) => ({
         id: channel.id.channelId,
@@ -66,7 +66,6 @@ export default function ChannelSetup() {
         thumbnailUrl: getChannelThumbnail(channel),
         rawChannel: channel
       }));
-
       setSearchResults(processedChannels);
     } catch (error) {
       console.error('Error searching YouTube channels:', error);
@@ -97,31 +96,47 @@ export default function ChannelSetup() {
       return;
     }
 
+    // Show curating animation for 4 seconds
+    setIsCurating(true);
+    
+    // After 4 seconds, show signup modal
+    setTimeout(() => {
+      setIsCurating(false);
+      setShowSignup(true);
+    }, 4000);
+  };
+
+  const handleSignupSuccess = async (user) => {
     try {
-      const response = await fetch('/api/feed/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          channels: selectedChannels.map(channel => ({
-            id: channel.id,
-            title: channel.title,
-            thumbnail: channel.thumbnailUrl
-          }))
-        })
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
+      // Save user's selected channels to Supabase
+      const { error } = await supabase
+        .from('user_feeds')
+        .insert([
+          { 
+            user_id: user.id,
+            channels: selectedChannels.map(channel => ({
+              id: channel.id,
+              title: channel.title,
+              thumbnail: channel.thumbnailUrl
+            }))
+          }
+        ]);
+        
+      if (error) throw error;
+      
+      // Hide signup modal and show feed creation animation
+      setShowSignup(false);
+      setIsCurating(true);
+      
+      // Navigate to feed page after 2 seconds
+      setTimeout(() => {
         router.push('/feed');
-      } else {
-        setError(result.message || 'Failed to create feed');
-      }
+      }, 2000);
+      
     } catch (error) {
-      console.error('Error creating feed:', error);
+      console.error('Error saving feed:', error);
       setError('Failed to create feed. Please try again.');
+      setIsCurating(false);
     }
   };
 
@@ -136,7 +151,6 @@ export default function ChannelSetup() {
             {error}
           </div>
         )}
-
         {/* Channel Search */}
         <div className="mb-8 relative">
           <input 
@@ -175,7 +189,6 @@ export default function ChannelSetup() {
             </div>
           )}
         </div>
-
         {/* Selected Channels */}
         <div className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">
@@ -216,7 +229,6 @@ export default function ChannelSetup() {
             </div>
           )}
         </div>
-
         {/* Submit Button */}
         <div className="text-center">
           <button 
@@ -233,6 +245,16 @@ export default function ChannelSetup() {
           </button>
         </div>
       </div>
+
+      {/* Curating Feed Loading Animation */}
+      {isCurating && <LoadingFeedAnimation />}
+      
+      {/* Signup Modal */}
+      <SignupModal 
+        isOpen={showSignup}
+        onClose={() => setShowSignup(false)}
+        onSuccess={handleSignupSuccess}
+      />
     </div>
   );
 }
