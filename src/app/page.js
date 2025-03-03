@@ -1,10 +1,16 @@
-
 "use client";
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
   const [isSignupOpen, setIsSignupOpen] = useState(false);
+  const router = useRouter();
+
+  const handleCtaClick = () => {
+    // Route to the setup page
+    router.push('/setup');
+  };
 
   const features = [
     {
@@ -42,8 +48,8 @@ export default function Home() {
           <div className="text-2xl font-bold">FocusFeed</div>
           <div className="space-x-4">
             <button 
-              className="text-white bg-transparent border border-white px-6 py-2   rounded"
-              onClick={() => setIsSignupOpen(true)}
+              className="text-white bg-transparent border border-white px-6 py-2 rounded"
+              onClick={handleCtaClick}
             >
               Log in
             </button>
@@ -69,7 +75,7 @@ export default function Home() {
         <div className="space-x-4">
           <button 
             className="bg-white text-black px-8 py-3 rounded-lg text-lg font-semibold hover:bg-gray-200 transition"
-            onClick={() => setIsSignupOpen(true)}
+            onClick={handleCtaClick}
           >
             Start Curating Your Feed
           </button>
@@ -178,7 +184,7 @@ export default function Home() {
         </p>
         <button 
           className="bg-white text-black px-8 py-3 rounded-lg text-lg font-semibold hover:bg-gray-200 transition"
-          onClick={() => setIsSignupOpen(true)}
+          onClick={handleCtaClick}
         >
           Start Your Free Trial
         </button>
