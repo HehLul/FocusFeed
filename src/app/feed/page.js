@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/utils/supabase';
 import LoadingFeedAnimation from '@/components/LoadingFeedAnimation';
+
 // Components defined inline to resolve import issues
 // You can move these to separate files later
 const VideoCard = ({ video }) => {
@@ -78,6 +79,167 @@ const VideoCard = ({ video }) => {
   );
 };
 
+// Playlist Card Component
+const PlaylistCard = ({ playlist, onClick }) => {
+  return (
+    <div 
+      className="bg-gray-900 rounded-lg overflow-hidden cursor-pointer transition-transform duration-200 hover:scale-105"
+      onClick={onClick}
+    >
+      <div className="relative aspect-video bg-gray-800">
+        {/* Playlist thumbnail or collage of videos */}
+        {playlist.thumbnail ? (
+          <img 
+            src={playlist.thumbnail} 
+            alt={playlist.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+            </svg>
+          </div>
+        )}
+        
+        {/* Video count badge */}
+        <div className="absolute bottom-2 right-2 bg-black bg-opacity-80 px-2 py-1 text-xs rounded flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+          </svg>
+          {playlist.videoCount || 0} videos
+        </div>
+      </div>
+      <div className="p-4">
+        <h4 className="font-medium text-sm mb-1">{playlist.name}</h4>
+        <p className="text-gray-400 text-xs line-clamp-2">{playlist.description}</p>
+      </div>
+    </div>
+  );
+};
+
+// Create Playlist Modal Component
+const CreatePlaylistModal = ({ isOpen, onClose, onSubmit }) => {
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [videoUrls, setVideoUrls] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    try {
+      // Process video URLs - parse them to extract video IDs if needed
+      const urls = videoUrls.split('\n').filter(url => url.trim() !== '');
+      
+      await onSubmit({
+        name,
+        description,
+        videoUrls: urls
+      });
+      
+      // Reset form after submission
+      setName('');
+      setDescription('');
+      setVideoUrls('');
+      onClose();
+    } catch (error) {
+      console.error('Error creating playlist:', error);
+      // You could add error handling/display here
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  if (!isOpen) return null;
+  
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+      <div className="bg-gray-900 rounded-lg max-w-md w-full p-6 relative">
+        <button 
+          onClick={onClose}
+          className="absolute top-3 right-3 text-gray-400 hover:text-white"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+        
+        <h3 className="text-xl font-bold mb-4">Create New Playlist</h3>
+        
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label htmlFor="playlist-name" className="block text-sm font-medium mb-1">
+              Playlist Name
+            </label>
+            <input
+              id="playlist-name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full px-3 py-2 bg-gray-800 rounded border border-gray-700 focus:border-red-500 focus:ring-1 focus:ring-red-500 text-white"
+              placeholder="e.g., Study Music"
+              required
+            />
+          </div>
+          
+          <div className="mb-4">
+            <label htmlFor="playlist-description" className="block text-sm font-medium mb-1">
+              Description (optional)
+            </label>
+            <textarea
+              id="playlist-description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full px-3 py-2 bg-gray-800 rounded border border-gray-700 focus:border-red-500 focus:ring-1 focus:ring-red-500 text-white h-20"
+              placeholder="What is this playlist for?"
+            />
+          </div>
+          
+          <div className="mb-6">
+            <label htmlFor="video-urls" className="block text-sm font-medium mb-1">
+              Video URLs (one per line)
+            </label>
+            <textarea
+              id="video-urls"
+              value={videoUrls}
+              onChange={(e) => setVideoUrls(e.target.value)}
+              className="w-full px-3 py-2 bg-gray-800 rounded border border-gray-700 focus:border-red-500 focus:ring-1 focus:ring-red-500 text-white h-32"
+              placeholder="https://www.youtube.com/watch?v=..."
+              required
+            />
+            <p className="text-xs text-gray-400 mt-1">
+              Paste YouTube video URLs, one per line
+            </p>
+          </div>
+          
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 mr-2 text-sm bg-gray-800 hover:bg-gray-700 rounded"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className={`px-4 py-2 text-sm font-medium rounded ${
+                isSubmitting 
+                  ? 'bg-gray-700 text-gray-400 cursor-not-allowed' 
+                  : 'bg-red-600 hover:bg-red-700 text-white'
+              }`}
+            >
+              {isSubmitting ? 'Creating...' : 'Create Playlist'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 export default function FeedPage() {
   const [user, setUser] = useState(null);
   const [userFeed, setUserFeed] = useState(null);
@@ -86,6 +248,11 @@ export default function FeedPage() {
   const [activeTab, setActiveTab] = useState('latest');
   const [videos, setVideos] = useState({ latest: [], top: [] });
   const [videoLoading, setVideoLoading] = useState(false);
+  
+  // Playlists state
+  const [playlists, setPlaylists] = useState([]);
+  const [showCreatePlaylistModal, setShowCreatePlaylistModal] = useState(false);
+  
   const router = useRouter();
 
   useEffect(() => {
@@ -135,6 +302,9 @@ export default function FeedPage() {
         if (isMounted) {
           setUserFeed(feedData);
           setLoading(false);
+          
+          // Load featured playlists
+          loadFeaturedPlaylists();
         }
         
       } catch (error) {
@@ -150,6 +320,39 @@ export default function FeedPage() {
       isMounted = false;
     };
   }, [router]);
+
+  // Load featured playlists
+  const loadFeaturedPlaylists = () => {
+    // Fetch from database in the future, but for now we'll use sample data
+    const featuredPlaylists = [
+      {
+        id: 'study',
+        name: 'Study Focus',
+        description: 'Concentration-enhancing videos for productive study sessions',
+        thumbnail: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80',
+        videoCount: 12,
+        featured: true
+      },
+      {
+        id: 'motivation',
+        name: 'Morning Motivation',
+        description: 'Start your day with positivity and energy',
+        thumbnail: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80',
+        videoCount: 8,
+        featured: true
+      },
+      {
+        id: 'rut',
+        name: 'Get Out of a Rut',
+        description: 'Inspiring content for when you feel stuck',
+        thumbnail: 'https://images.unsplash.com/photo-1493246507139-91e8fad9978e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80',
+        videoCount: 5,
+        featured: true
+      }
+    ];
+    
+    setPlaylists(featuredPlaylists);
+  };
 
   // Fetch videos when userFeed is loaded
   useEffect(() => {
@@ -261,6 +464,43 @@ export default function FeedPage() {
     }
   };
 
+  // Handle playlist creation
+  const handleCreatePlaylist = async (playlistData) => {
+    try {
+      // In the future, this should save to the database
+      console.log('Creating playlist with data:', playlistData);
+      
+      // For now, we'll just add it to the local state
+      const newPlaylist = {
+        id: `custom-${Date.now()}`,
+        name: playlistData.name,
+        description: playlistData.description,
+        videoCount: playlistData.videoUrls.length,
+        featured: false,
+        // We would normally generate a thumbnail based on the videos
+        thumbnail: null
+      };
+      
+      setPlaylists([...playlists, newPlaylist]);
+      
+      // Show success message (could use a toast notification)
+      alert('Playlist created successfully!');
+      
+      return true;
+    } catch (error) {
+      console.error('Error creating playlist:', error);
+      alert('Failed to create playlist. Please try again.');
+      return false;
+    }
+  };
+
+  const handlePlaylistClick = (playlistId) => {
+    // In the future, this should navigate to the playlist page
+    console.log('Navigate to playlist:', playlistId);
+    alert(`Navigating to playlist ${playlistId} (Coming soon)`);
+    // router.push(`/playlist/${playlistId}`);
+  };
+
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     router.push('/');
@@ -270,8 +510,6 @@ export default function FeedPage() {
   const changeTab = (tab) => {
     setActiveTab(tab);
   };
-
-
 
   // Debug component to show raw session data
   const DebugSession = () => {
@@ -341,24 +579,46 @@ export default function FeedPage() {
       <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
         <h2 className="text-2xl font-bold mb-6">Your Focused Feed</h2>
         
-        {/* Channel list */}
-        <div className="mb-8">
-          <h3 className="text-lg font-medium mb-3">Your Channels</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {userFeed?.channels.map((channel) => (
-              <div key={channel.id} className="bg-gray-900 p-4 rounded-lg">
-                <img 
-                  src={channel.thumbnail || '/default-channel-thumbnail.png'} 
-                  alt={channel.title}
-                  className="w-full aspect-square object-cover rounded-full mb-2"
-                  onError={(e) => {
-                    e.target.src = '/default-channel-thumbnail.png';
-                  }}
-                />
-                <p className="text-sm text-center truncate">{channel.title}</p>
-              </div>
-            ))}
+        {/* Playlists Section */}
+        <div className="mb-12">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium">Your Playlists</h3>
+            <button 
+              onClick={() => setShowCreatePlaylistModal(true)}
+              className="flex items-center px-3 py-1.5 bg-red-600 hover:bg-red-700 rounded text-sm font-medium"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              Create Playlist
+            </button>
           </div>
+          
+          {playlists.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {playlists.map((playlist) => (
+                <PlaylistCard 
+                  key={playlist.id} 
+                  playlist={playlist} 
+                  onClick={() => handlePlaylistClick(playlist.id)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="bg-gray-900 rounded-lg p-8 text-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-700 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+              </svg>
+              <p className="text-gray-400 mb-2">You don't have any playlists yet</p>
+              <p className="text-gray-500 text-sm mb-4">Create your first playlist to begin organizing your focused content</p>
+              <button 
+                onClick={() => setShowCreatePlaylistModal(true)}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded text-sm font-medium"
+              >
+                Create Your First Playlist
+              </button>
+            </div>
+          )}
         </div>
         
         {/* Tabs for Latest and Top videos */}
@@ -479,6 +739,12 @@ export default function FeedPage() {
         {/* Debug section - remove in production */}
         {process.env.NODE_ENV !== 'production' && <DebugSession />}
       </main>
+      
+      {/* Create Playlist Modal */}
+      <CreatePlaylistModal 
+        isOpen={showCreatePlaylistModal}
+        onClose={() => setShowCreatePlaylistModal(false)}
+        onSubmit={handleCreatePlaylist}
+      />
     </div>
-  );
-}
+  );}
