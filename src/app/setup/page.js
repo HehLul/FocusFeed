@@ -106,8 +106,21 @@ export default function ChannelSetup() {
     }, 4000);
   };
 
+  
   const handleSignupSuccess = async (user) => {
     try {
+      console.log("Signup success with user ID:", user.id);
+      
+      // Verify session before proceeding
+      const { data: sessionCheck } = await supabase.auth.getSession();
+      
+      if (!sessionCheck.session) {
+        console.error("No active session found after signup success");
+        throw new Error("Authentication failed. Please try again.");
+      }
+      
+      console.log("Active session confirmed, user is logged in");
+      
       // Save user's selected channels to Supabase
       const { error } = await supabase
         .from('user_feeds')
@@ -122,20 +135,46 @@ export default function ChannelSetup() {
           }
         ]);
         
-      if (error) throw error;
+      if (error) {
+        console.error("Error saving feed:", error);
+        throw error;
+      }
       
+      // After successful feed save
+      console.log("Feed saved successfully");
+  
       // Hide signup modal and show feed creation animation
       setShowSignup(false);
       setIsCurating(true);
-      
-      // Navigate to feed page after 2 seconds
-      setTimeout(() => {
-        router.push('/feed');
+  
+      // Wait a moment to ensure everything is saved and session is established
+      setTimeout(async () => {
+        try {
+          // Double-check session before redirecting
+          const { data: sessionCheck } = await supabase.auth.getSession();
+          console.log("Final session check before redirect:", 
+            sessionCheck.session ? "Session active" : "No session");
+          
+          if (sessionCheck.session) {
+            // We have a confirmed session, safe to redirect
+            console.log("Redirecting to feed page with active session");
+            router.push('/feed');
+          } else {
+            // Still no session, show an error
+            console.error("No active session before redirect");
+            setError("Authentication issue. Please try again.");
+            setIsCurating(false);
+          }
+        } catch (error) {
+          console.error("Error during redirect:", error);
+          setIsCurating(false);
+          setError("Failed to navigate to your feed. Please try again.");
+        }
       }, 2000);
       
     } catch (error) {
-      console.error('Error saving feed:', error);
-      setError('Failed to create feed. Please try again.');
+      console.error('Error in signup process:', error);
+      setError(error.message || 'Failed to create feed. Please try again.');
       setIsCurating(false);
     }
   };

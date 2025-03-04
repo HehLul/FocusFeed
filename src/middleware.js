@@ -1,22 +1,28 @@
 // middleware.js
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
 import { NextResponse } from 'next/server';
 
 export async function middleware(req) {
-  const res = NextResponse.next();
-  const supabase = createMiddlewareClient({ req, res });
+  console.log("Middleware running for path:", req.nextUrl.pathname);
   
-  const { data: { session } } = await supabase.auth.getSession();
+  // Check for auth cookies - using a different approach to check
+  const cookieHeader = req.headers.get('cookie') || '';
+  const hasAuthCookie = cookieHeader.includes('sb-access-token') || 
+                        cookieHeader.includes('sb-refresh-token') || 
+                        cookieHeader.includes('supabase-auth-token');
   
-  // If user is not signed in and the current path is /feed, redirect to home
-  if (!session && req.nextUrl.pathname.startsWith('/feed')) {
-    const redirectUrl = new URL('/', req.url);
-    return NextResponse.redirect(redirectUrl);
-  }
+  console.log("Auth cookie present:", hasAuthCookie);
   
-  return res;
+  // Temporarily disable redirect to troubleshoot
+  // if (req.nextUrl.pathname.startsWith('/feed') && !hasAuthCookie) {
+  //   console.log("No auth cookie found, would redirect to home");
+  //   return NextResponse.redirect(new URL('/', req.url));
+  // }
+  
+  console.log("Proceeding to requested page");
+  return NextResponse.next();
 }
 
+// Only run middleware on the feed routes
 export const config = {
   matcher: ['/feed/:path*'],
 };
