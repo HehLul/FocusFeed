@@ -1,13 +1,10 @@
-// components/VideoSkeletonLoader.jsx
+// components/feed/VideoSkeleton.jsx
 import React from 'react';
 
-const VideoSkeletonLoader = () => {
-  // Create an array of placeholder items
-  const placeholders = Array(6).fill(null);
-  
+const VideoSkeletonLoader = ({ count = 6 }) => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {placeholders.map((_, index) => (
+      {Array(count).fill(null).map((_, index) => (
         <div key={index} className="bg-gray-900 rounded-lg overflow-hidden animate-pulse">
           {/* Thumbnail placeholder */}
           <div className="w-full aspect-video bg-gray-800"></div>
