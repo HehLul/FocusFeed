@@ -12,6 +12,7 @@ import PlaylistSection from '@/components/feed/PlaylistSection';
 import FeedTabs from '@/components/feed/FeedTabs';
 import VideoSection from '@/components/feed/VideoSection';
 import CreatePlaylistModal from '@/components/feed/CreatePlaylistModal';
+import VideoCard from '@/components/feed/VideoCard';
 
 export default function FeedPage() {
   const [user, setUser] = useState(null);
@@ -96,36 +97,51 @@ export default function FeedPage() {
   }, [router]);
 
   // Load featured playlists
-  const loadFeaturedPlaylists = () => {
-    // Fetch from database in the future, but for now we'll use sample data
-    const featuredPlaylists = [
-      {
-        id: 'study',
-        name: 'Study Focus',
-        description: 'Concentration-enhancing videos for productive study sessions',
-        thumbnail: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80',
-        videoCount: 12,
-        featured: true
-      },
-      {
-        id: 'motivation',
-        name: 'Morning Motivation',
-        description: 'Start your day with positivity and energy',
-        thumbnail: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80',
-        videoCount: 8,
-        featured: true
-      },
-      {
-        id: 'rut',
-        name: 'Get Out of a Rut',
-        description: 'Inspiring content for when you feel stuck',
-        thumbnail: 'https://images.unsplash.com/photo-1493246507139-91e8fad9978e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80',
-        videoCount: 5,
-        featured: true
-      }
-    ];
-    
-    setPlaylists(featuredPlaylists);
+  const loadFeaturedPlaylists = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+  
+      // Fetch playlists with their videos and thumbnails
+      const { data: playlistData, error: playlistError } = await supabase
+        .from('playlists')
+        .select(`
+          id,
+          title,
+          description,
+          created_at,
+          playlist_videos (
+            position,
+            video:youtube_videos (
+              id,
+              title,
+              thumbnail_url
+            )
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+  
+      if (playlistError) throw playlistError;
+  
+      // Transform the data
+      const transformedPlaylists = playlistData.map(playlist => ({
+        id: playlist.id,
+        name: playlist.title,
+        description: playlist.description,
+        videoCount: playlist.playlist_videos.length,
+        thumbnails: playlist.playlist_videos
+          .sort((a, b) => a.position - b.position)
+          .map(pv => pv.video?.thumbnail_url)
+          .filter(Boolean)
+          .slice(0, 4),
+        featured: false
+      }));
+  
+      setPlaylists(transformedPlaylists);
+    } catch (error) {
+      console.error('Error loading playlists:', error);
+    }
   };
 
   // Fetch videos when userFeed is loaded
@@ -239,40 +255,103 @@ export default function FeedPage() {
   };
 
   // Handle playlist creation
-  const handleCreatePlaylist = async (playlistData) => {
-    try {
-      // In the future, this should save to the database
-      console.log('Creating playlist with data:', playlistData);
-      
-      // For now, we'll just add it to the local state
-      const newPlaylist = {
-        id: `custom-${Date.now()}`,
-        name: playlistData.name,
-        description: playlistData.description,
-        videoCount: playlistData.videoUrls.length,
-        featured: false,
-        // We would normally generate a thumbnail based on the videos
-        thumbnail: null
-      };
-      
-      setPlaylists([...playlists, newPlaylist]);
-      
-      // Show success message (could use a toast notification)
-      alert('Playlist created successfully!');
-      
-      return true;
-    } catch (error) {
-      console.error('Error creating playlist:', error);
-      alert('Failed to create playlist. Please try again.');
-      return false;
-    }
-  };
+ // Replace your current handleCreatePlaylist with this:
+const handleCreatePlaylist = async (playlistData) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
 
+    // First, create the playlist
+    const { data: playlist, error: playlistError } = await supabase
+      .from('playlists')
+      .insert({
+        user_id: user.id,
+        title: playlistData.name,
+        description: playlistData.description
+      })
+      .select()
+      .single();
+
+    if (playlistError) throw playlistError;
+
+    // If videos were provided, add them to the playlist
+    if (playlistData.videoUrls && playlistData.videoUrls.length > 0) {
+      // First ensure the videos exist in youtube_videos table
+      for (let i = 0; i < playlistData.videoUrls.length; i++) {
+        const videoUrl = playlistData.videoUrls[i];
+        // Extract video ID from URL (you'll need to implement this based on your URL format)
+        const videoId = extractVideoId(videoUrl);
+        
+        // Insert video if it doesn't exist
+        const { error: videoError } = await supabase
+          .from('youtube_videos')
+          .upsert({
+            id: videoId,
+            title: `Video ${i + 1}`, // Placeholder title
+            thumbnail_url: '/default-thumbnail.png', // Placeholder thumbnail
+            // Add other required fields with placeholder values
+            channel_title: 'Unknown Channel',
+            description: '',
+            view_count: 0,
+            published_at: new Date().toISOString()
+          }, {
+            onConflict: 'id'
+          });
+
+        if (videoError) console.error('Error upserting video:', videoError);
+
+        // Add to playlist_videos with position
+        const { error: playlistVideoError } = await supabase
+          .from('playlist_videos')
+          .insert({
+            playlist_id: playlist.id,
+            video_id: videoId,
+            position: i
+          });
+
+        if (playlistVideoError) console.error('Error adding video to playlist:', playlistVideoError);
+      }
+    }
+
+    // Add the new playlist to state
+    const newPlaylist = {
+      id: playlist.id,
+      name: playlist.title,
+      description: playlist.description,
+      videoCount: playlistData.videoUrls?.length || 0,
+      thumbnails: [],
+      featured: false
+    };
+
+    setPlaylists(prev => [newPlaylist, ...prev]);
+    setShowCreatePlaylistModal(false);
+    
+    return true;
+  } catch (error) {
+    console.error('Error creating playlist:', error);
+    alert('Failed to create playlist. Please try again.');
+    return false;
+  }
+};
+
+// Helper function to extract video ID from URL
+const extractVideoId = (url) => {
+  try {
+    // Handle different URL formats
+    const urlObj = new URL(url);
+    if (urlObj.hostname.includes('youtube.com')) {
+      return urlObj.searchParams.get('v');
+    } else if (urlObj.hostname.includes('youtu.be')) {
+      return urlObj.pathname.substring(1);
+    }
+    return url; // fallback to using the whole URL if can't extract ID
+  } catch (e) {
+    console.error('Error parsing URL:', e);
+    return url;
+  }
+};
   const handlePlaylistClick = (playlistId) => {
-    // In the future, this should navigate to the playlist page
-    console.log('Navigate to playlist:', playlistId);
-    alert(`Navigating to playlist ${playlistId} (Coming soon)`);
-    // router.push(`/playlist/${playlistId}`);
+    router.push(`/playlist/${playlistId}`);
   };
 
   const handleSignOut = async () => {
