@@ -1,11 +1,92 @@
 import { useRouter } from "next/navigation";
 import { Music } from "lucide-react"; // Import the Music icon for fallback
+import { useState, useEffect } from "react";
 
 export default function PlaylistCard({ playlist }) {
   const router = useRouter();
+  const [imageStatuses, setImageStatuses] = useState({});
+
+  // Debug info on mount
+  useEffect(() => {
+    console.log(`PlaylistCard mounted for: ${playlist.name}`, {
+      id: playlist.id,
+      thumbnails: playlist.thumbnails,
+      thumbnailCount: playlist.thumbnails?.length || 0,
+    });
+
+    // Pre-check the thumbnails
+    if (playlist.thumbnails && playlist.thumbnails.length > 0) {
+      Promise.all(
+        playlist.thumbnails.map((url, i) => {
+          // Skip empty URLs
+          if (!url) return Promise.resolve({ index: i, status: "empty" });
+
+          // Test if the image can be loaded
+          return fetch(url, { method: "HEAD" })
+            .then((response) => ({
+              index: i,
+              status: response.ok ? "ok" : "error",
+              statusCode: response.status,
+            }))
+            .catch((err) => ({
+              index: i,
+              status: "error",
+              error: err.message,
+            }));
+        })
+      ).then((results) => {
+        const statuses = {};
+        results.forEach((result) => {
+          statuses[result.index] = result;
+        });
+        console.log(
+          `Image status check for playlist "${playlist.name}":`,
+          statuses
+        );
+        setImageStatuses(statuses);
+      });
+    }
+  }, [playlist]);
 
   const handleClick = () => {
     router.push(`/playlist/${playlist.id}`);
+  };
+
+  // Handle image error
+  const handleImageError = (e, index) => {
+    console.error(
+      `Error loading image at index ${index} for playlist "${playlist.name}"`,
+      {
+        src: e.target.src,
+        naturalWidth: e.target.naturalWidth,
+        naturalHeight: e.target.naturalHeight,
+      }
+    );
+    e.target.src = "/default-thumbnail.png";
+
+    // Update the status
+    setImageStatuses((prev) => ({
+      ...prev,
+      [index]: { index, status: "error-display", src: e.target.src },
+    }));
+  };
+
+  // Log successful image loads
+  const handleImageLoad = (e, index) => {
+    console.log(
+      `Successfully loaded image at index ${index} for playlist "${playlist.name}"`,
+      {
+        src: e.target.src,
+        naturalWidth: e.target.naturalWidth,
+        naturalHeight: e.target.naturalHeight,
+      }
+    );
+
+    // Update the status
+    setImageStatuses((prev) => ({
+      ...prev,
+      [index]: { index, status: "loaded", src: e.target.src },
+    }));
   };
 
   // Default thumbnail for empty slots
@@ -16,6 +97,13 @@ export default function PlaylistCard({ playlist }) {
       onClick={handleClick}
       className="group cursor-pointer rounded-lg overflow-hidden bg-gray-800/50 hover:bg-gray-800 transition-colors"
     >
+      {/* Debug info */}
+      {process.env.NODE_ENV !== "production" && (
+        <div className="bg-red-700 text-white text-xs p-1 hidden">
+          Thumbnails: {playlist.thumbnails?.length || 0}
+        </div>
+      )}
+
       {/* Playlist thumbnail grid */}
       <div className="relative aspect-video bg-gray-900">
         {playlist.thumbnails?.length > 0 ? (
@@ -30,9 +118,9 @@ export default function PlaylistCard({ playlist }) {
                     src={playlist.thumbnails[i]}
                     alt=""
                     className="absolute inset-0 w-full h-full object-cover"
-                    onError={(e) => {
-                      e.target.src = defaultThumbnail;
-                    }}
+                    onError={(e) => handleImageError(e, i)}
+                    onLoad={(e) => handleImageLoad(e, i)}
+                    crossOrigin="anonymous" // Try with CORS handling
                   />
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center">
