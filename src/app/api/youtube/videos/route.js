@@ -1,198 +1,139 @@
-// app/api/youtube/videos/route.js
 import { NextResponse } from "next/server";
 
-// Helper to format duration from YouTube's ISO 8601 format to a readable format
-function formatDuration(isoDuration) {
-  // If duration is missing, return a default value
-  if (!isoDuration) return "0:00";
-
-  // Parse the ISO 8601 duration format (e.g., PT1H23M45S)
-  const match = isoDuration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
-
-  if (!match) return "0:00";
-
-  const hours = parseInt(match[1] || 0);
-  const minutes = parseInt(match[2] || 0);
-  const seconds = parseInt(match[3] || 0);
-
-  // Format the duration based on length
-  if (hours > 0) {
-    return `${hours}:${minutes.toString().padStart(2, "0")}:${seconds
-      .toString()
-      .padStart(2, "0")}`;
-  } else {
-    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+// Helper function to split an array into chunks
+function chunkArray(array, chunkSize) {
+  const results = [];
+  for (let i = 0; i < array.length; i += chunkSize) {
+    results.push(array.slice(i, i + chunkSize));
   }
+  return results;
 }
 
 export async function POST(request) {
   try {
-    // Add request validation
-    if (!request.body) {
-      return NextResponse.json(
-        { error: "Request body is required" },
-        { status: 400 }
-      );
-    }
+    const body = await request.json();
+    const {
+      channelIds = [],
+      videoIds = [],
+      maxResults = 10,
+      order = "date",
+    } = body;
 
-    // Parse the request body
-    let body;
-    try {
-      body = await request.json();
-    } catch (e) {
-      console.error("Failed to parse request body:", e);
-      return NextResponse.json(
-        { error: "Invalid JSON in request body" },
-        { status: 400 }
-      );
-    }
-
-    const { channelIds, order = "date", maxResults = 20 } = body;
-
-    // Validate channelIds
-    if (!channelIds || !Array.isArray(channelIds) || channelIds.length === 0) {
-      return NextResponse.json(
-        { error: "Channel IDs must be provided as an array" },
-        { status: 400 }
-      );
-    }
-
-    // Validate order parameter
-    if (order !== "date" && order !== "viewCount") {
-      return NextResponse.json(
-        { error: 'Order must be either "date" or "viewCount"' },
-        { status: 400 }
-      );
-    }
-
-    // Get YouTube API key from environment variables
     const apiKey = process.env.YOUTUBE_API_KEY;
-
     if (!apiKey) {
-      console.error("YouTube API key is missing");
       return NextResponse.json(
-        { error: "Server configuration error" },
+        { error: "YouTube API key is missing" },
         { status: 500 }
       );
     }
 
-    // Combine videos from all channels, up to a total of maxResults
-    let allVideos = [];
+    let videos = [];
+    const baseUrl = "https://www.googleapis.com/youtube/v3/videos";
 
-    // Limit the number of channels to process to avoid excessive API calls
-    const channelsToProcess = channelIds.slice(0, 10);
+    if (videoIds.length > 0) {
+      // Fetch videos by specific video IDs
+      const videoIdChunks = chunkArray(videoIds, 50); // API allows up to 50 IDs per request
+      for (const chunk of videoIdChunks) {
+        const params = new URLSearchParams({
+          key: apiKey,
+          part: "snippet,statistics",
+          id: chunk.join(","),
+        });
 
-    // We'll fetch videos from each channel in parallel
-    const videoPromises = channelsToProcess.map(async (channelId) => {
-      try {
-        // 1. Get uploads playlist ID for the channel
-        const channelResponse = await fetch(
-          `https://www.googleapis.com/youtube/v3/channels?part=contentDetails&id=${channelId}&key=${apiKey}`,
-          { cache: "no-store" }
-        );
+        const response = await fetch(`${baseUrl}?${params}`, {
+          cache: "no-store",
+        });
 
-        if (!channelResponse.ok) {
-          throw new Error(
-            `Failed to fetch channel data: ${channelResponse.status}`
-          );
+        if (!response.ok) {
+          throw new Error(`YouTube API error: ${response.status}`);
         }
 
-        const channelData = await channelResponse.json();
-
-        if (!channelData.items || channelData.items.length === 0) {
-          console.warn(`No channel found for ID: ${channelId}`);
-          return [];
-        }
-
-        const uploadsPlaylistId =
-          channelData.items[0].contentDetails.relatedPlaylists.uploads;
-
-        // 2. Get videos from the uploads playlist
-        const playlistResponse = await fetch(
-          `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=10&playlistId=${uploadsPlaylistId}&key=${apiKey}`,
-          { cache: "no-store" }
-        );
-
-        if (!playlistResponse.ok) {
-          throw new Error(
-            `Failed to fetch playlist items: ${playlistResponse.status}`
-          );
-        }
-
-        const playlistData = await playlistResponse.json();
-
-        if (!playlistData.items || playlistData.items.length === 0) {
-          console.warn(`No videos found for channel: ${channelId}`);
-          return [];
-        }
-
-        // Extract video IDs for further details
-        const videoIds = playlistData.items
-          .map((item) => item.snippet.resourceId.videoId)
-          .join(",");
-
-        // 3. Get additional video details
-        const videoDetailsResponse = await fetch(
-          `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,statistics&id=${videoIds}&key=${apiKey}`,
-          { cache: "no-store" }
-        );
-
-        if (!videoDetailsResponse.ok) {
-          throw new Error(
-            `Failed to fetch video details: ${videoDetailsResponse.status}`
-          );
-        }
-
-        const videoDetailsData = await videoDetailsResponse.json();
-
-        if (!videoDetailsData.items || videoDetailsData.items.length === 0) {
-          console.warn(`No video details found for IDs: ${videoIds}`);
-          return [];
-        }
-
-        // Process and format the video data
-        return videoDetailsData.items.map((video) => ({
-          id: video.id,
-          title: video.snippet.title,
-          description: video.snippet.description,
-          publishedAt: video.snippet.publishedAt,
-          thumbnail:
-            video.snippet.thumbnails.high?.url ||
-            video.snippet.thumbnails.default?.url,
-          channelId: video.snippet.channelId,
-          channelTitle: video.snippet.channelTitle,
-          duration: formatDuration(video.contentDetails.duration),
-          viewCount: parseInt(video.statistics.viewCount || 0),
-          likeCount: parseInt(video.statistics.likeCount || 0),
-          commentCount: parseInt(video.statistics.commentCount || 0),
-        }));
-      } catch (error) {
-        console.error(`Error fetching videos for channel ${channelId}:`, error);
-        return [];
+        const data = await response.json();
+        videos = videos.concat(data.items || []);
       }
-    });
+    } else if (channelIds.length > 0) {
+      // Fetch videos from specific channels
+      for (const channelId of channelIds) {
+        const searchUrl = "https://www.googleapis.com/youtube/v3/search";
+        const searchParams = new URLSearchParams({
+          key: apiKey,
+          part: "snippet",
+          channelId,
+          maxResults: maxResults.toString(),
+          order,
+          type: "video",
+        });
 
-    // Wait for all promises to resolve
-    const videosArrays = await Promise.all(videoPromises);
+        const searchResponse = await fetch(`${searchUrl}?${searchParams}`, {
+          cache: "no-store",
+        });
 
-    // Flatten the array of arrays into a single array of videos
-    allVideos = videosArrays.flat();
+        if (!searchResponse.ok) {
+          console.error(
+            `Error fetching channel ${channelId}:`,
+            searchResponse.status
+          );
+          continue;
+        }
 
-    // Sort the videos based on the requested order
-    if (order === "date") {
-      allVideos.sort(
-        (a, b) => new Date(b.publishedAt) - new Date(a.publishedAt)
-      );
-    } else if (order === "viewCount") {
-      allVideos.sort((a, b) => b.viewCount - a.viewCount);
+        const searchData = await searchResponse.json();
+        const videoIdsFromChannels =
+          searchData.items?.map((item) => item.id.videoId) || [];
+
+        if (videoIdsFromChannels.length > 0) {
+          const videoParams = new URLSearchParams({
+            key: apiKey,
+            part: "snippet,statistics",
+            id: videoIdsFromChannels.join(","),
+          });
+
+          const videoDetailsResponse = await fetch(
+            `${baseUrl}?${videoParams}`,
+            {
+              cache: "no-store",
+            }
+          );
+
+          if (!videoDetailsResponse.ok) {
+            console.error(
+              "Error fetching video details:",
+              videoDetailsResponse.status
+            );
+            continue;
+          }
+
+          const videoData = await videoDetailsResponse.json();
+          videos = videos.concat(videoData.items || []);
+        }
+      }
     }
 
-    // Limit to maxResults
-    allVideos = allVideos.slice(0, maxResults);
+    // Sort videos if needed
+    if (order === "viewCount") {
+      videos.sort(
+        (a, b) =>
+          parseInt(b.statistics.viewCount || 0) -
+          parseInt(a.statistics.viewCount || 0)
+      );
+    }
 
-    return NextResponse.json({ videos: allVideos });
+    // Transform the response to match your expected format
+    const transformedVideos = videos.slice(0, maxResults).map((video) => ({
+      id: video.id,
+      title: video.snippet.title,
+      description: video.snippet.description,
+      thumbnail:
+        video.snippet.thumbnails.high?.url ||
+        video.snippet.thumbnails.default?.url,
+      channelId: video.snippet.channelId,
+      channelTitle: video.snippet.channelTitle,
+      viewCount: parseInt(video.statistics.viewCount || 0),
+      publishedAt: video.snippet.publishedAt,
+    }));
+
+    return NextResponse.json({ videos: transformedVideos });
   } catch (error) {
-    console.error("Error in /api/youtube/videos:", error);
+    console.error("Error in YouTube API route:", error);
     return NextResponse.json(
       { error: "Failed to fetch videos" },
       { status: 500 }

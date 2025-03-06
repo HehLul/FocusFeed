@@ -47,11 +47,12 @@ export default function PlaylistPage() {
         console.log("Video IDs:", videoIds);
 
         // Fetch fresh data from YouTube API
+        // Update this part in the fetchPlaylistData function
         const response = await fetch("/api/youtube/videos", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            channelIds: videoIds, // Your API is expecting channelIds
+            videoIds: videoIds, // Changed from channelIds to videoIds
             maxResults: videoIds.length,
           }),
         });
@@ -59,34 +60,33 @@ export default function PlaylistPage() {
         const youtubeData = await response.json();
         console.log("YouTube API response:", youtubeData);
 
-        // Transform and merge data
+        // Update this part in your playlist page
         const transformedVideos = playlistData.playlist_videos
           .map((pv) => {
-            // Try to find fresh data from YouTube API
-            const freshData = youtubeData.videos?.find(
-              (v) => v.id === pv.video_id
-            );
-
-            // Use fresh data if available, fall back to database data
+            const freshVideo = freshVideos.find((v) => v.id === pv.video_id);
+            if (freshVideo) {
+              return {
+                id: freshVideo.id,
+                title: freshVideo.title,
+                description: freshVideo.description,
+                thumbnail_url: freshVideo.thumbnail, // Add both for compatibility
+                thumbnail: freshVideo.thumbnail, // Add both for compatibility
+                channel_title: freshVideo.channelTitle,
+                view_count: freshVideo.viewCount,
+                published_at: freshVideo.publishedAt,
+                duration: freshVideo.duration,
+                position: pv.position,
+              };
+            }
             return {
-              id: pv.video_id,
-              title:
-                freshData?.title ||
-                pv.youtube_videos?.title ||
-                "Unavailable video",
-              description:
-                freshData?.description || pv.youtube_videos?.description || "",
-              thumbnail_url:
-                freshData?.thumbnail || pv.youtube_videos?.thumbnail_url,
-              channel_title:
-                freshData?.channelTitle ||
-                pv.youtube_videos?.channel_title ||
-                "Unknown Channel",
-              view_count:
-                freshData?.viewCount || pv.youtube_videos?.view_count || 0,
-              published_at:
-                freshData?.publishedAt || pv.youtube_videos?.published_at,
-              duration: freshData?.duration,
+              id: pv.youtube_videos?.id,
+              title: pv.youtube_videos?.title || "Unavailable video",
+              description: pv.youtube_videos?.description,
+              thumbnail_url: pv.youtube_videos?.thumbnail_url,
+              thumbnail: pv.youtube_videos?.thumbnail_url,
+              channel_title: pv.youtube_videos?.channel_title,
+              view_count: pv.youtube_videos?.view_count,
+              published_at: pv.youtube_videos?.published_at,
               position: pv.position,
             };
           })
