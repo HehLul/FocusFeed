@@ -1,3 +1,4 @@
+// src/app/api/youtube/videos/route.js
 import { NextResponse } from "next/server";
 
 // Helper function to split an array into chunks
@@ -19,6 +20,8 @@ export async function POST(request) {
       order = "date",
     } = body;
 
+    console.log("API Request:", { channelIds, videoIds, maxResults, order });
+
     const apiKey = process.env.YOUTUBE_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
@@ -32,11 +35,12 @@ export async function POST(request) {
 
     if (videoIds.length > 0) {
       // Fetch videos by specific video IDs
+      console.log(`Fetching ${videoIds.length} videos by ID`);
       const videoIdChunks = chunkArray(videoIds, 50); // API allows up to 50 IDs per request
       for (const chunk of videoIdChunks) {
         const params = new URLSearchParams({
           key: apiKey,
-          part: "snippet,statistics",
+          part: "snippet,statistics,contentDetails",
           id: chunk.join(","),
         });
 
@@ -45,6 +49,7 @@ export async function POST(request) {
         });
 
         if (!response.ok) {
+          console.error(`YouTube API error: ${response.status}`);
           throw new Error(`YouTube API error: ${response.status}`);
         }
 
@@ -53,6 +58,7 @@ export async function POST(request) {
       }
     } else if (channelIds.length > 0) {
       // Fetch videos from specific channels
+      console.log(`Fetching videos from ${channelIds.length} channels`);
       for (const channelId of channelIds) {
         const searchUrl = "https://www.googleapis.com/youtube/v3/search";
         const searchParams = new URLSearchParams({
@@ -83,7 +89,7 @@ export async function POST(request) {
         if (videoIdsFromChannels.length > 0) {
           const videoParams = new URLSearchParams({
             key: apiKey,
-            part: "snippet,statistics",
+            part: "snippet,statistics,contentDetails",
             id: videoIdsFromChannels.join(","),
           });
 
@@ -118,19 +124,33 @@ export async function POST(request) {
     }
 
     // Transform the response to match your expected format
-    const transformedVideos = videos.slice(0, maxResults).map((video) => ({
-      id: video.id,
-      title: video.snippet.title,
-      description: video.snippet.description,
-      thumbnail:
+    const transformedVideos = videos.slice(0, maxResults).map((video) => {
+      // Get the best available thumbnail URL
+      const thumbnailUrl =
+        video.snippet.thumbnails.maxres?.url ||
         video.snippet.thumbnails.high?.url ||
-        video.snippet.thumbnails.default?.url,
-      channelId: video.snippet.channelId,
-      channelTitle: video.snippet.channelTitle,
-      viewCount: parseInt(video.statistics.viewCount || 0),
-      publishedAt: video.snippet.publishedAt,
-    }));
+        video.snippet.thumbnails.medium?.url ||
+        video.snippet.thumbnails.default?.url;
 
+      return {
+        id: video.id,
+        title: video.snippet.title,
+        description: video.snippet.description,
+        // Use both thumbnail and thumbnail_url for compatibility
+        thumbnail: thumbnailUrl,
+        thumbnail_url: thumbnailUrl,
+        channelId: video.snippet.channelId,
+        channel_title: video.snippet.channelTitle,
+        channelTitle: video.snippet.channelTitle,
+        viewCount: parseInt(video.statistics.viewCount || 0),
+        view_count: parseInt(video.statistics.viewCount || 0),
+        publishedAt: video.snippet.publishedAt,
+        published_at: video.snippet.publishedAt,
+        duration: video.contentDetails?.duration || null,
+      };
+    });
+
+    console.log(`Returning ${transformedVideos.length} transformed videos`);
     return NextResponse.json({ videos: transformedVideos });
   } catch (error) {
     console.error("Error in YouTube API route:", error);

@@ -225,7 +225,20 @@ export default function FeedPage() {
             throw new Error(errorData.error || "Failed to fetch latest videos");
           }
 
-          return await response.json();
+          const data = await response.json();
+
+          // Ensure each video has a proper thumbnail URL
+          if (data.videos && data.videos.length > 0) {
+            data.videos = data.videos.map((video) => {
+              // Generate YouTube thumbnail URL if needed
+              if (!video.thumbnail) {
+                video.thumbnail = `https://i.ytimg.com/vi/${video.id}/mqdefault.jpg`;
+              }
+              return video;
+            });
+          }
+
+          return data;
         } catch (error) {
           clearTimeout(timeoutId);
           console.error("Error fetching latest videos:", error);
@@ -259,7 +272,20 @@ export default function FeedPage() {
             throw new Error(errorData.error || "Failed to fetch top videos");
           }
 
-          return await response.json();
+          const data = await response.json();
+
+          // Ensure each video has a proper thumbnail URL
+          if (data.videos && data.videos.length > 0) {
+            data.videos = data.videos.map((video) => {
+              // Generate YouTube thumbnail URL if needed
+              if (!video.thumbnail) {
+                video.thumbnail = `https://i.ytimg.com/vi/${video.id}/mqdefault.jpg`;
+              }
+              return video;
+            });
+          }
+
+          return data;
         } catch (error) {
           clearTimeout(timeoutId);
           console.error("Error fetching top videos:", error);
@@ -272,6 +298,18 @@ export default function FeedPage() {
         fetchLatestVideos(),
         fetchTopVideos(),
       ]);
+
+      // Debug what's coming back
+      if (latestData.status === "fulfilled") {
+        console.log(
+          "Latest videos sample:",
+          latestData.value.videos.slice(0, 2)
+        );
+      }
+
+      if (topData.status === "fulfilled") {
+        console.log("Top videos sample:", topData.value.videos.slice(0, 2));
+      }
 
       // Process results, handling any failures
       setVideos({
@@ -307,6 +345,29 @@ export default function FeedPage() {
   // Helper function to extract video ID from URL
   // Updated handleCreatePlaylist function
   // Updated handleCreatePlaylist function to use proxied thumbnails
+  // Helper to ensure thumbnail URLs are in the correct format
+  const ensureThumbnailUrl = (video) => {
+    // If the video already has a thumbnail property, use it
+    if (video.thumbnail) return video;
+
+    // If it has a thumbnail_url, convert it to the thumbnail property
+    if (video.thumbnail_url) {
+      video.thumbnail = video.thumbnail_url;
+      return video;
+    }
+
+    // If it has a video_id or id, generate a YouTube thumbnail URL
+    if (video.video_id || video.id) {
+      const videoId = video.video_id || video.id;
+      video.thumbnail = `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`;
+      return video;
+    }
+
+    // Fallback to default thumbnail
+    video.thumbnail = "/default-thumbnail.png";
+    return video;
+  };
+
   const handleCreatePlaylist = async (playlistData) => {
     try {
       const {
