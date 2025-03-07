@@ -213,7 +213,7 @@ export default function FeedPage() {
             body: JSON.stringify({
               channelIds,
               order: "date", // Order by date for latest videos
-              maxResults: 20, // Fetch up to 20 videos
+              maxResults: 50, // Fetch more videos to get a good mix across channels
             }),
             signal: controller.signal,
           });
@@ -227,14 +227,35 @@ export default function FeedPage() {
 
           const data = await response.json();
 
-          // Ensure each video has a proper thumbnail URL
+          // Ensure each video has a proper thumbnail URL and parsed date
           if (data.videos && data.videos.length > 0) {
             data.videos = data.videos.map((video) => {
               // Generate YouTube thumbnail URL if needed
               if (!video.thumbnail) {
                 video.thumbnail = `https://i.ytimg.com/vi/${video.id}/mqdefault.jpg`;
               }
+
+              // Parse the publication date for sorting
+              video.parsedDate = new Date(
+                video.publishedAt || video.published_at || 0
+              );
+
               return video;
+            });
+
+            // Sort all videos by date, regardless of channel
+            data.videos.sort((a, b) => b.parsedDate - a.parsedDate);
+
+            // Log the dates of the first few videos to verify sorting
+            console.log("Latest videos sorted by date:");
+            data.videos.slice(0, 3).forEach((video, index) => {
+              console.log(
+                `${index + 1}. ${
+                  video.title
+                } - ${video.parsedDate.toISOString()} - ${
+                  video.channel_title || video.channelTitle
+                }`
+              );
             });
           }
 
@@ -260,7 +281,7 @@ export default function FeedPage() {
             body: JSON.stringify({
               channelIds,
               order: "viewCount", // Order by view count for top videos
-              maxResults: 20, // Fetch up to 20 videos
+              maxResults: 50, // Fetch more to get a good mix
             }),
             signal: controller.signal,
           });
@@ -282,6 +303,23 @@ export default function FeedPage() {
                 video.thumbnail = `https://i.ytimg.com/vi/${video.id}/mqdefault.jpg`;
               }
               return video;
+            });
+
+            // Sort by view count in descending order
+            data.videos.sort((a, b) => {
+              const viewCountA = parseInt(a.viewCount || a.view_count || 0);
+              const viewCountB = parseInt(b.viewCount || b.view_count || 0);
+              return viewCountB - viewCountA;
+            });
+
+            // Log the top videos by view count
+            console.log("Top videos sorted by view count:");
+            data.videos.slice(0, 3).forEach((video, index) => {
+              console.log(
+                `${index + 1}. ${video.title} - ${
+                  video.viewCount || video.view_count
+                } views - ${video.channel_title || video.channelTitle}`
+              );
             });
           }
 
