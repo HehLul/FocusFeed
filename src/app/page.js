@@ -3,13 +3,22 @@ import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import EnhancedLoadingScreen from "@/components/common/EnhancedLoadingScreen";
 
 export default function Home() {
   const [isSignupOpen, setIsSignupOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const handleCtaClick = () => {
-    router.push("/setup");
+    setIsLoading(true);
+
+    // Set a random timeout between 3-5 seconds
+    const loadingTime = Math.floor(Math.random() * 2000) + 3000; // 3000-5000ms
+
+    setTimeout(() => {
+      router.push("/setup");
+    }, loadingTime);
   };
 
   const features = [
@@ -32,15 +41,18 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-black text-white">
+      {isLoading && <EnhancedLoadingScreen />}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-black/50 backdrop-blur-md">
         <div className="container mx-auto flex justify-between items-center py-4 px-6">
           <div className="text-3xl font-extrabold tracking-wide">FocusFeed</div>
-          <button
-            className="text-white border border-white px-6 py-2 rounded-md hover:bg-white hover:text-black transition"
-            onClick={handleCtaClick}
-          >
-            Get Started
-          </button>
+          <div className="flex items-center space-x-4">
+            <button
+              className="text-white hover:text-green-400 transition"
+              onClick={() => router.push("/login")}
+            >
+              Login
+            </button>
+          </div>
         </div>
       </nav>
 
