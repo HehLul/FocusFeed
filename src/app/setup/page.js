@@ -7,12 +7,8 @@ import { supabase } from "../../utils/supabase";
 
 // Category data
 const categories = [
-  { id: "tech", title: "Technology", image: "/categories/tech.jpg" },
-  {
-    id: "fitness",
-    title: "Fitness & Health",
-    image: "/categories/fitness.jpg",
-  },
+  { id: "business", title: "Business", image: "/categories/business.jpg" },
+
   {
     id: "philosophy",
     title: "Philosophy",
@@ -23,19 +19,21 @@ const categories = [
     title: "Productivity",
     image: "/categories/productivity.jpg",
   },
-  { id: "coding", title: "Programming", image: "/categories/coding.jpg" },
-  {
-    id: "psychology",
-    title: "Psychology",
-    image: "/categories/psychology.jpg",
-  },
-  { id: "education", title: "Education", image: "/categories/education.jpg" },
+
   {
     id: "selfhelp",
     title: "Self Improvement",
     image: "/categories/selfhelp.jpg",
   },
 ];
+
+// Import categoryChannels from a JSON file in your project
+// This would be the actual import in your code:
+// import categoryChannels from '../../data/categoryChannels.json';
+
+// For this example, I'm including a sample of what the JSON structure would look like
+// Using direct image URLs with protocol and correct domain
+import categoryChannels from "./categoryChannels";
 
 export default function ChannelSetup() {
   const router = useRouter();
@@ -47,7 +45,115 @@ export default function ChannelSetup() {
   const [showSignup, setShowSignup] = useState(false);
   const [isCurating, setIsCurating] = useState(false);
   const [activeCategory, setActiveCategory] = useState(null);
-  const [view, setView] = useState("default"); // 'default' or 'category'
+  const [view, setView] = useState("default"); // 'default', 'category', or 'categoryResults'
+
+  // Get category name from ID
+  const getCategoryName = (categoryId) => {
+    const category = categories.find((cat) => cat.id === categoryId);
+    return category ? category.title : "Category";
+  };
+
+  // Debounce search to reduce API calls
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (searchTerm.trim()) {
+        searchYouTubeChannels();
+      } else {
+        setSearchResults([]);
+      }
+    }, 500);
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm]);
+
+  const searchYouTubeChannels = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(
+        `/api/youtube/search-channels?q=${encodeURIComponent(searchTerm)}`
+      );
+      const data = await response.json();
+
+      // Filter only channel results
+      const channelResults = data.items.filter(
+        (item) => item.id.kind === "youtube#channel"
+      );
+
+      // Process channels
+      const processedChannels = channelResults.map((channel, index) => ({
+        id: channel.id.channelId,
+        uniqueKey: `${channel.id.channelId}-${index}`,
+        title: channel.snippet.channelTitle,
+        description: channel.snippet.description,
+        thumbnailUrl: getChannelThumbnail(channel),
+        rawChannel: channel,
+      }));
+
+      setSearchResults(processedChannels);
+    } catch (error) {
+      console.error("Error searching YouTube channels:", error);
+      setError(error.message || "Failed to search channels");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Show channels from the category JSON instead of API call
+  const showCategoryChannels = (categoryId) => {
+    setActiveCategory(categoryId);
+    setView("categoryResults");
+
+    console.log("Selected category:", categoryId);
+
+    // Check if we have channels for this category
+    if (
+      categoryChannels[categoryId] &&
+      categoryChannels[categoryId].length > 0
+    ) {
+      console.log("Category channels found:", categoryChannels[categoryId]);
+
+      // Format channels to match expected structure
+      const formattedChannels = categoryChannels[categoryId].map(
+        (channel, index) => {
+          console.log("Processing channel:", channel);
+          console.log("Thumbnail URL before:", channel.thumbnailUrl);
+
+          const formattedChannel = {
+            id: channel.id,
+            uniqueKey: `${channel.id}-${index}`,
+            title: channel.title,
+            description: channel.description,
+            thumbnailUrl: channel.thumbnailUrl, // Use directly from JSON
+            banner: channel.banner || null,
+          };
+
+          console.log("Formatted channel:", formattedChannel);
+          console.log("Thumbnail URL after:", formattedChannel.thumbnailUrl);
+
+          return formattedChannel;
+        }
+      );
+
+      console.log("All formatted channels:", formattedChannels);
+      setSearchResults(formattedChannels);
+    } else {
+      console.log("No channels found for category:", categoryId);
+      setSearchResults([]);
+    }
+  };
+
+  const resetSearch = () => {
+    setActiveCategory(null);
+    setView("default");
+    setSearchTerm("");
+    setSearchResults([]);
+  };
+
+  const backToCategories = () => {
+    setActiveCategory(null);
+    setView("category");
+    setSearchResults([]);
+  };
 
   // Improved thumbnail selection function
   const getChannelThumbnail = (channel) => {
@@ -68,65 +174,6 @@ export default function ChannelSetup() {
     }
   };
 
-  // Debounce search to reduce API calls
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      if (searchTerm.trim()) {
-        searchYouTubeChannels();
-      } else {
-        setSearchResults([]);
-      }
-    }, 500);
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm]);
-
-  const searchYouTubeChannels = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(
-        `/api/youtube/search-channels?q=${encodeURIComponent(searchTerm)}${
-          activeCategory ? `&category=${activeCategory}` : ""
-        }`
-      );
-      const data = await response.json();
-
-      // Filter only channel results
-      const channelResults = data.items.filter(
-        (item) => item.id.kind === "youtube#channel"
-      );
-      // Process channels
-      const processedChannels = channelResults.map((channel, index) => ({
-        id: channel.id.channelId,
-        uniqueKey: `${channel.id.channelId}-${index}`,
-        title: channel.snippet.channelTitle,
-        description: channel.snippet.description,
-        thumbnailUrl: getChannelThumbnail(channel),
-        rawChannel: channel,
-      }));
-      setSearchResults(processedChannels);
-    } catch (error) {
-      console.error("Error searching YouTube channels:", error);
-      setError(error.message || "Failed to search channels");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const searchByCategory = (categoryId) => {
-    setActiveCategory(categoryId);
-    setView("category");
-    setSearchTerm(categories.find((cat) => cat.id === categoryId).title);
-    // This will trigger the useEffect to search
-  };
-
-  const resetSearch = () => {
-    setActiveCategory(null);
-    setView("default");
-    setSearchTerm("");
-    setSearchResults([]);
-  };
-
   const removeChannel = (channelId) => {
     setSelectedChannels((prev) =>
       prev.filter((channel) => channel.id !== channelId)
@@ -140,10 +187,7 @@ export default function ChannelSetup() {
       selectedChannels.length < 10
     ) {
       setSelectedChannels((prev) => [...prev, channel]);
-      setSearchTerm("");
-      setSearchResults([]);
-      setView("default");
-      setActiveCategory(null);
+      // Optional: you could provide feedback that the channel was added
     }
   };
 
@@ -331,7 +375,7 @@ export default function ChannelSetup() {
               </div>
             )}
           </div>
-        ) : (
+        ) : view === "category" ? (
           /* Categories Section */
           <div className="mb-8">
             <h2 className="text-2xl font-semibold mb-4 text-center">
@@ -342,7 +386,7 @@ export default function ChannelSetup() {
               {categories.map((category) => (
                 <div
                   key={category.id}
-                  onClick={() => searchByCategory(category.id)}
+                  onClick={() => showCategoryChannels(category.id)}
                   className="relative h-40 rounded-lg overflow-hidden cursor-pointer transform transition-transform hover:scale-105 hover:shadow-lg hover:shadow-green-500/20"
                 >
                   <div
@@ -361,15 +405,112 @@ export default function ChannelSetup() {
                     </h3>
                   </div>
 
-                  {activeCategory === category.id && (
-                    <div className="absolute top-0 right-0 m-2">
-                      <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full">
-                        Active
-                      </span>
-                    </div>
-                  )}
+                  {/* Add a badge for categories that have curated channels */}
+                  {categoryChannels[category.id] &&
+                    categoryChannels[category.id].length > 0 && (
+                      <div className="absolute top-0 right-0 m-2">
+                        <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                          {categoryChannels[category.id].length} Channels
+                        </span>
+                      </div>
+                    )}
                 </div>
               ))}
+            </div>
+          </div>
+        ) : (
+          /* Category Results - Single Column View */
+          <div className="relative z-10">
+            {/* Blurred Background */}
+            <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-0"></div>
+
+            <div className="relative z-10 bg-gray-900 rounded-lg p-4 max-w-3xl mx-auto">
+              {/* Header with Back Button */}
+              <div className="flex items-center mb-6">
+                <button
+                  onClick={backToCategories}
+                  className="p-2 rounded-full bg-gray-800 hover:bg-gray-700 mr-4 transition-colors"
+                >
+                  <svg
+                    className="w-5 h-5 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                    />
+                  </svg>
+                </button>
+                <h2 className="text-2xl font-semibold">
+                  <span className="text-green-400">
+                    {getCategoryName(activeCategory)}
+                  </span>{" "}
+                  Channels
+                </h2>
+              </div>
+
+              {searchResults.length === 0 ? (
+                <div className="text-center py-12 bg-gray-800 rounded-lg">
+                  <p className="text-gray-400">
+                    No channels found in this category
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {searchResults.map((channel) => (
+                    <div
+                      key={channel.uniqueKey}
+                      className="bg-gray-800 rounded-lg overflow-hidden border border-gray-700 hover:border-green-500 transition-colors"
+                    >
+                      {/* Channel Banner (if available) */}
+                      {channel.banner && (
+                        <div
+                          className="h-32 w-full bg-cover bg-center relative"
+                          style={{ backgroundImage: `url(${channel.banner})` }}
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent"></div>
+                        </div>
+                      )}
+
+                      {/* Channel Info */}
+                      <div className="p-4 flex">
+                        <img
+                          src={channel.thumbnailUrl}
+                          alt={channel.title}
+                          className="w-16 h-16 rounded-full mr-4 object-cover border-2 border-green-500"
+                          onError={(e) => {
+                            console.log(
+                              "Thumbnail load error for channel:",
+                              channel.title
+                            );
+                            console.log("Attempted URL:", channel.thumbnailUrl);
+                            e.target.src = "/default-channel-thumbnail.png";
+                          }}
+                        />
+                        <div className="flex-1">
+                          <h3 className="text-xl font-semibold mb-2">
+                            {channel.title}
+                          </h3>
+                          <p className="text-gray-400 text-sm line-clamp-2 mb-4">
+                            {channel.description || "No description available"}
+                          </p>
+                          <button
+                            onClick={() => addChannel(channel)}
+                            className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
+                          >
+                            Add to Feed
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}

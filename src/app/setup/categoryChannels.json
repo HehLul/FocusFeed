@@ -1,0 +1,134 @@
+{
+  "tech": [
+    {
+      "id": "UCBJycsmduvYEL83R_U4JriQ",
+      "title": "Marques Brownlee",
+      "description": "MKBHD: Quality Tech Videos | YouTuber | Geek | Consumer Electronics | Tech Head | Internet Personality!",
+      "thumbnailUrl": "https://yt3.googleusercontent.com/ytc/APkrFKayTRQafdr9J5WWraOQX_vJbmCbQJUzPIz4HXNI=s176-c-k-c0x00ffffff-no-rj",
+      "banner": "https://yt3.googleusercontent.com/uC6vEhU5MV_h8G5hKkYTHOP9ROzJOYLcC4U4j4tShfjqkx6VpTgH-QdXk_YIpvtbvyXGHt7PAQ=w1060-fcrop64=1,00005a57ffffa5a8-k-c0xffffffff-no-nd-rj"
+    },
+    {
+      "id": "UC-6OW5aJYBFM33zXQlBKPNA",
+      "title": "Linus Tech Tips",
+      "description": "Tech can be complicated; we try to make it easy.",
+      "thumbnailUrl": "https://yt3.googleusercontent.com/ytc/APkrFKbmBMXgEz8QV5RjUzn-2kfNkgPkOgEPREru43yI=s176-c-k-c0x00ffffff-no-rj",
+      "banner": "https://yt3.googleusercontent.com/lF_UQ54JRzNi7S1OCfQHUGFxfSwY9uqZJgT3qHlZGQAuXclpOOyYmEaLc5ZOPLszW_BD88OlOQ=w1060-fcrop64=1,00005a57ffffa5a8-k-c0xffffffff-no-nd-rj"
+    }
+  ],
+  "fitness": [
+    {
+      "id": "UCe0TLA0EsQbE-MjuHXevj2A",
+      "title": "ATHLEAN-X",
+      "description": "ATHLEAN-X™ is the place for all things sports, fitness, and nutrition.",
+      "thumbnailUrl": "https://yt3.googleusercontent.com/ytc/APkrFKYm3SN1dalF9y41Dh5dg74V-86C2qDQNma-0AVFDQ=s176-c-k-c0x00ffffff-no-rj",
+      "banner": "https://yt3.googleusercontent.com/S4VWNJnJF3tHGLTNFfQJ4xsuYo0R5RXf5UeSgCun3vmZFpTvPzupa_3fI-JCQxoikBMsYRkHLA=w1060-fcrop64=1,00005a57ffffa5a8-k-c0xffffffff-no-nd-rj"
+    }
+  ],
+
+  "coding": [
+    {
+      "id": "UCvjgXvBlbQiydffZU7m1_aw",
+      "title": "The Coding Train",
+      "description": "All aboard! The Coding Train is on its way with creative coding video tutorials on subjects ranging from the basics of programming languages to generative algorithms like simulation, computer vision, and data visualization.",
+      "thumbnailUrl": "https://i.ytimg.com/vi/17WoOqgXsRM/hqdefault.jpg",
+      "banner": "https://yt3.googleusercontent.com/ytc/APkrFKZa7nBWJ-aF5lXekVJ3gUYWw_Gf2Xnvkqarrxlq4w=w1060-fcrop64=1,00005a57ffffa5a8-k-c0xffffffff-no-nd-rj"
+    }
+  ],
+  "business": [
+    {
+      "id": "UCfy5nKT8TAT8UEBuddHveFg",
+      "title": "Charlie Morgan",
+      "description": "Videos about business and stuff.",
+      "thumbnailUrl": "https://i.ytimg.com/vi/xeOtvzGd_oY/hqdefault.jpg"
+    },
+    {
+      "id": "UCUyDOdBWhC1MCxEjC46d-zw",
+      "title": "Alex Harmozi",
+      "description": "Day Job: I invest and scale companies at Acquisition.com | Co-Owner, Skool. Side Hustle: I make free content showing how we do it",
+      "thumbnailUrl": "https://i.ytimg.com/vi/QwEb78e5a8Y/hqdefault.jpg"
+    },
+    {
+      "id": "UCcefcZRL2oaA_uBNeo5UOWg",
+      "title": "Y Combinator",
+      "description": "Subscribe for startup advice, founder stories, and a look inside Y Combinator.",
+      "thumbnailUrl": "https://i.ytimg.com/vi/z-TeST6LnOk/hqdefault.jpg"
+    },
+    {
+      "id": "UCctXZhXmG-kf3tlIXgVZUlw",
+      "title": "Garyvee",
+      "description": "In addition to running multiple businesses, Gary documents his daily life as a CEO through his social media channels, which have more than 45 million followers",
+      "thumbnailUrl": "https://i.ytimg.com/vi/69ZS60GXpL8/hqdefault.jpg"
+    },
+    {
+      "id": "UCHoBKQDRkJcOY2BO47q5Ruw",
+      "title": "MicroConf",
+      "description": "Welcome to MicroConf - Where Independent SaaS Founders Launch, Meet, Learn, and Grow! MicroConf is the world’s most trusted community for bootstrapped SaaS founders. ",
+      "thumbnailUrl": "https://i.ytimg.com/vi/QviDwsMLXb0/hqdefault.jpg"
+    }
+  ],
+
+  "philosophy": [
+    {
+      "id": "UCs9GzFYrdhj5ni2h3sFvysA",
+      "title": "bridges",
+      "description": "'What is great in man is that he is a bridge and not an end.' — Friedrich Nietzsche, Thus Spoke Zarathustra",
+      "thumbnailUrl": "https://i.ytimg.com/vi/dPi77TgYO2Q/hqdefault.jpg"
+    },
+    {
+      "id": "UC-2vh3f5tIDkt4K01ZsGDXw",
+      "title": "Statue of Wisdom",
+      "description": "Deep dive into philosophy",
+      "thumbnailUrl": "https://i.ytimg.com/vi/P9H8oXatQXc/hqdefault.jpg"
+    },
+    {
+      "id": "UCO5QSoES5yn2Dw7YixDYT5Q",
+      "title": "Aperture",
+      "description": "Bringing the universe down to Earth and exploring the human condition. A show by Underknown. ",
+      "thumbnailUrl": "https://i.ytimg.com/vi/T8P9VmEmpE8/hqdefault.jpg"
+    },
+    {
+      "id": "UCh6gJYYFDueIzAk_Jn6SmZw",
+      "title": "Artificially Aware",
+      "description": "Delve into pieces that spark questions, that defy the ordinary, and invite the mind to wander into uncharted territories.",
+      "thumbnailUrl": "https://i.ytimg.com/vi/5I1Az6YMYL4/hqdefault.jpg"
+    },
+    {
+      "id": "UC-tLyAaPbRZiYrOJxAGB7dQ",
+      "title": "Pursuit of Wonder",
+      "description": "Fostering reflection through powerful ideas and stories.",
+      "thumbnailUrl": "https://i.ytimg.com/vi/ohN-j-S0ul0/hqdefault.jpg"
+    }
+  ],
+  "selfhelp": [
+    {
+      "id": "UCWXYDYv5STLk-zoxMP2I1Lw",
+      "title": "Dan Koe",
+      "description": "Dan Koe focuses on self-improvement, digital entrepreneurship, and mindset optimization",
+      "thumbnailUrl": "https://i.ytimg.com/vi/WZeLFMQOtZ4/hqdefault.jpg"
+    },
+    {
+      "id": "UCJ24N4O0bP7LGLBDvye7oCA",
+      "title": "Matt D'Avella",
+      "description": "A filmmaker and minimalist who creates high-quality videos on productivity, self-improvement, and intentional living.",
+      "thumbnailUrl": "https://i.ytimg.com/vi/tG2GJZcBKOE/hqdefault.jpg"
+    },
+    {
+      "id": "UC6oapb1Vl2GAtYfrKRFZ55w",
+      "title": "Hamza Advanced",
+      "description": "covering self-improvement, masculinity, discipline, and purpose",
+      "thumbnailUrl": "https://i.ytimg.com/vi/WE8kKeRaJLw/hqdefault.jpg"
+    },
+    {
+      "id": "UCtUId5WFnN82GdDy7DgaQ7w",
+      "title": "Better Ideas",
+      "description": "With a laid-back yet insightful approach, the content explores topics like productivity, mindset shifts, creativity, and mental clarity.",
+      "thumbnailUrl": "https://i.ytimg.com/vi/2jWN-pMTf3o/hqdefault.jpg"
+    },
+    {
+      "id": "UCrdWRLq10OHuy7HmSckV3Vg",
+      "title": "Nathaniel Drew",
+      "description": "Exploring the beauty of being alive. Amor fati.",
+      "thumbnailUrl": "https://i.ytimg.com/vi/__UNhmnQgzU/hqdefault.jpg"
+    }
+  ]
+}
