@@ -1,212 +1,146 @@
 "use client";
-import React, { useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import React, { useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [isSignupOpen, setIsSignupOpen] = useState(false);
   const router = useRouter();
 
   const handleCtaClick = () => {
-    // Route to the setup page
-    router.push('/setup');
+    router.push("/setup");
   };
 
   const features = [
     {
-      title: 'Curate Your Feed',
-      description: 'Select only the content creators that matter to you, eliminating digital noise.'
+      title: "Take Back Control",
+      description:
+        "Eliminate algorithmic distractions and build a feed that serves you, not advertisers.",
     },
     {
-      title: 'Purposeful Consumption',
-      description: 'Create themed feeds for learning, relaxation, and personal growth.'
+      title: "Watch With Purpose",
+      description:
+        "Curate a YouTube experience aligned with your goals—whether learning, relaxation, or growth.",
     },
     {
-      title: 'Reclaim Your Time',
-      description: 'Stop endless scrolling and take control of your media diet.'
-    }
-  ];
-
-  const reviews = [
-    {
-      name: 'Michael T.',
-      text: 'FocusFeed helped me reduce my daily screen time by 3 hours. That\'s nearly 1,000 hours a year I can now invest in myself!',
-      rating: 5
+      title: "Reclaim Your Life",
+      description:
+        "Escape the endless loop of mindless scrolling. FocusFeed puts *you* in control.",
     },
-    {
-      name: 'Emily R.',
-      text: 'I used to waste hours mindlessly scrolling. Now, I have a purposeful feed that actually helps me grow and learn.',
-      rating: 5
-    }
   ];
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-black/50 backdrop-blur-md">
-        <div className="container mx-auto flex justify-between items-center p-4">
-          <div className="text-2xl font-bold">FocusFeed</div>
-          <div className="space-x-4">
-            <button 
-              className="text-white bg-transparent border border-white px-6 py-2 rounded"
-              onClick={handleCtaClick}
-            >
-              Log in
-            </button>
-            {/* <button 
-              className="text-black bg-white px-4 py-2 rounded"
-              onClick={() => setIsSignupOpen(true)}
-            >
-              Sign up
-            </button> */}
-          </div>
+        <div className="container mx-auto flex justify-between items-center py-4 px-6">
+          <div className="text-3xl font-extrabold tracking-wide">FocusFeed</div>
+          <button
+            className="text-white border border-white px-6 py-2 rounded-md hover:bg-white hover:text-black transition"
+            onClick={handleCtaClick}
+          >
+            Get Started
+          </button>
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <div className="container mx-auto px-4 pt-24 text-center">
-        <h1 className="text-6xl font-bold mb-6">
-          Take Control of Your YouTube Consumption
-        </h1>
-        <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-          Curate a YouTube feed that aligns with your goals. Stop mindless scrolling and start intentional watching.
-        </p>
-        
-        <div className="space-x-4">
-          <button 
-            className="bg-white text-black px-8 py-3 rounded-lg text-lg font-semibold hover:bg-gray-200 transition"
-            onClick={handleCtaClick}
-          >
-            Start Curating Your Feed
-          </button>
-        </div>
+      {/* Updated Hero Section with Two-Column Layout */}
+      <header className="px-6 pt-32 pb-16">
+        <div className="container mx-auto grid md:grid-cols-2 gap-8 items-center">
+          {/* Left Column - Text Content */}
+          <div className="text-left">
+            <h1 className="text-5xl md:text-6xl font-bold leading-tight">
+              Break Free from Algorithmic Addiction
+            </h1>
+            <p className="text-xl text-gray-300 mt-6">
+              Every second wasted on mindless scrolling is a second stolen from
+              your potential. Build a feed that fuels your future.
+            </p>
+            <button
+              className="mt-8 bg-green-500 text-black px-8 py-3 rounded-lg text-lg font-semibold hover:bg-green-600 transition"
+              onClick={handleCtaClick}
+            >
+              Start Your Free Trial
+            </button>
+          </div>
 
-        {/* Time Savings Calculator */}
-        <div className="mt-16 bg-gray-900 p-8 rounded-lg max-w-2xl mx-auto">
-          <h2 className="text-3xl font-bold mb-4">Imagine Saving 1,000+ Hours Annually</h2>
-          <p className="text-gray-300 mb-4">
-            The average person spends 3.5 hours daily on social media and YouTube.
-            FocusFeed helps you reclaim that time:
-          </p>
-          <div className="grid grid-cols-2 gap-4 text-center">
-            <div>
-              <p className="text-5xl font-bold text-green-500">1,277</p>
-              <p className="text-gray-300">Hours Saved Annually</p>
-            </div>
-            <div>
-              <p className="text-5xl font-bold text-green-500">$38,310</p>
-              <p className="text-gray-300">Potential Productivity Gain</p>
+          {/* Right Column - Illustration */}
+          <div className="flex justify-around md:justify-end">
+            <div className="relative w-full max-w-md h-80 md:h-96">
+              <Image
+                src="/illustration.jpg"
+                alt="Person trapped in digital addiction"
+                fill
+                className="object-contain"
+                priority
+              />
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* Features Section */}
-      <div className="container mx-auto px-4 py-16">
-        <div className="grid md:grid-cols-3 gap-8">
+      <section className="bg-gray-900 p-12 text-center">
+        <h2 className="text-3xl font-bold mb-4">The Cost of Inaction</h2>
+        <p className="text-lg text-gray-300 max-w-2xl mx-auto">
+          An average person spends 3.5 hours daily on YouTube & social media.
+          That's{" "}
+          <span className="text-green-500 font-bold">1,277 hours a year</span>
+          —more than 50 full days.
+        </p>
+        <div className="grid md:grid-cols-2 gap-8 mt-6 max-w-4xl mx-auto">
+          <div className="p-6 bg-gray-800 rounded-lg">
+            <h3 className="text-4xl font-bold text-green-500">1,277</h3>
+            <p className="text-gray-300">Hours Wasted Annually</p>
+          </div>
+          <div className="p-6 bg-gray-800 rounded-lg">
+            <h3 className="text-4xl font-bold text-green-500">$38,310</h3>
+            <p className="text-gray-300">Potential Productivity Gain</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-16 px-6 text-center">
+        <h2 className="text-4xl font-bold mb-12">Why FocusFeed?</h2>
+        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
           {features.map((feature, index) => (
-            <div 
-              key={index} 
-              className="bg-gray-900 p-6 rounded-lg text-center"
-            >
+            <div key={index} className="bg-gray-800 p-6 rounded-lg">
               <h3 className="text-2xl font-semibold text-white mb-4">
                 {feature.title}
               </h3>
-              <p className="text-gray-300">
-                {feature.description}
-              </p>
+              <p className="text-gray-300">{feature.description}</p>
             </div>
           ))}
         </div>
-      </div>
+      </section>
 
-      {/* Reviews Section */}
-      <div className="container mx-auto px-4 py-16 text-center">
-        <h2 className="text-4xl font-bold mb-12">What Our Users Say</h2>
-        <div className="grid md:grid-cols-2 gap-8">
-          {reviews.map((review, index) => (
-            <div 
-              key={index} 
-              className="bg-gray-900 p-6 rounded-lg"
-            >
-              <p className="text-xl italic mb-4">
-                "{review.text}"
-              </p>
-              <div className="flex justify-center items-center">
-                <div className="text-yellow-500 mr-2">{'★'.repeat(review.rating)}</div>
-                <p className="font-semibold">{review.name}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Comparison Section */}
-      <div className="container mx-auto px-4 py-16">
-        <h2 className="text-4xl font-bold text-center mb-12">
-          How FocusFeed Differs
-        </h2>
-        <div className="grid md:grid-cols-3 gap-8">
-          <div className="bg-gray-900 p-6 rounded-lg">
-            <h3 className="text-2xl font-semibold mb-4">Traditional YouTube</h3>
-            <ul className="text-gray-300 space-y-2">
-              <li>✖ Endless Recommended Videos</li>
-              <li>✖ Algorithmic Distractions</li>
-              <li>✖ No Content Control</li>
-            </ul>
-          </div>
-          <div className="bg-gray-900 p-6 rounded-lg border-2 border-green-500">
-            <h3 className="text-2xl font-semibold mb-4">FocusFeed</h3>
-            <ul className="text-gray-300 space-y-2">
-              <li>✓ Curated Content Feeds</li>
-              <li>✓ Purposeful Watching</li>
-              <li>✓ Complete Control</li>
-            </ul>
-          </div>
-          <div className="bg-gray-900 p-6 rounded-lg">
-            <h3 className="text-2xl font-semibold mb-4">Other Blockers</h3>
-            <ul className="text-gray-300 space-y-2">
-              <li>✖ Easy to Bypass</li>
-              <li>✖ Relies on Willpower</li>
-              <li>✖ Temporary Solutions</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      {/* Call to Action */}
-      <div className="container mx-auto px-4 py-16 text-center">
+      <section className="text-center py-16 bg-gray-900">
         <h2 className="text-4xl font-bold mb-6">
-          Ready to Transform Your Media Consumption?
+          One Decision Can Change Everything
         </h2>
-        <p className="text-xl text-gray-300 mb-8">
-          Join thousands of users who have taken control of their digital diet.
+        <p className="text-xl text-gray-300 max-w-2xl mx-auto mb-8">
+          Will you take control of your digital habits today, or continue
+          letting algorithms dictate your attention?
         </p>
-        <button 
-          className="bg-white text-black px-8 py-3 rounded-lg text-lg font-semibold hover:bg-gray-200 transition"
+        <button
+          className="bg-green-500 text-black px-8 py-3 rounded-lg text-lg font-semibold hover:bg-green-600 transition"
           onClick={handleCtaClick}
         >
-          Start Your Free Trial
+          Get Started Now
         </button>
-      </div>
+      </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 py-8">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-gray-400">
-            © 2024 FocusFeed. All rights reserved.
-          </p>
-          <div className="mt-4 space-x-4">
-            <Link href="/privacy" className="text-gray-400 hover:text-white">
-              Privacy Policy
-            </Link>
-            <Link href="/terms" className="text-gray-400 hover:text-white">
-              Terms of Service
-            </Link>
-            <Link href="/contact" className="text-gray-400 hover:text-white">
-              Contact
-            </Link>
-          </div>
+      <footer className="bg-gray-900 py-8 text-center">
+        <p className="text-gray-400">© 2024 FocusFeed. All rights reserved.</p>
+        <div className="mt-4 space-x-4">
+          <Link href="/privacy" className="text-gray-400 hover:text-white">
+            Privacy Policy
+          </Link>
+          <Link href="/terms" className="text-gray-400 hover:text-white">
+            Terms of Service
+          </Link>
+          <Link href="/contact" className="text-gray-400 hover:text-white">
+            Contact
+          </Link>
         </div>
       </footer>
     </div>
