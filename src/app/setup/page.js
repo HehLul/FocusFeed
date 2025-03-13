@@ -14,16 +14,16 @@ const categories = [
     title: "Philosophy",
     image: "/categories/philosophy.jpg",
   },
-  {
-    id: "productivity",
-    title: "Productivity",
-    image: "/categories/productivity.jpg",
-  },
 
   {
     id: "selfhelp",
     title: "Self Improvement",
     image: "/categories/selfhelp.jpg",
+  },
+  {
+    id: "podcast",
+    title: "Podcasts",
+    image: "/categories/podcast.jpg",
   },
 ];
 

@@ -130,5 +130,38 @@
       "description": "Exploring the beauty of being alive. Amor fati.",
       "thumbnailUrl": "https://i.ytimg.com/vi/__UNhmnQgzU/hqdefault.jpg"
     }
+  ],
+
+  "podcast": [
+    {
+      "id": "UCznv7Vf9nBdJYvBagFdAHWw",
+      "title": "Tim Ferris",
+      "description": "Tim Ferriss has been listed as one of Fast Company’s “Most Innovative Business People” and one of Fortune’s “40 under 40.” ",
+      "thumbnailUrl": "https://i.ytimg.com/vi/8KPLs-ZFuPo/hqdefault.jpg"
+    },
+    {
+      "id": "UCSHZKyawb77ixDdsGog4iWA",
+      "title": "Lex Fridman",
+      "description": "Lex Fridman Podcast and other videos.",
+      "thumbnailUrl": "https://i.ytimg.com/vi/L_Guz73e6fw/hqdefault.jpg"
+    },
+    {
+      "id": "UCGq-a57w-aPwyi3pW7XLiHw",
+      "title": "The Diary of a CEO",
+      "description": "The show features deep, unfiltered conversations with successful entrepreneurs, athletes, celebrities, and thought leaders.",
+      "thumbnailUrl": "https://i.ytimg.com/vi/Kl-I7sUcAOY/hqdefault.jpg"
+    },
+    {
+      "id": "UCkqcY4CAuBFNFho6JgygCnA",
+      "title": "Jocko Podcast",
+      "description": "Jocko Willink and Echo Charles discuss discipline and leadership... extensively.",
+      "thumbnailUrl": "https://i.ytimg.com/vi/nHEQxe6bquo/hqdefault.jpg"
+    },
+    {
+      "id": "UCzQUP1qoWDoEbmsQxvdjxgQ",
+      "title": "The Joe Rogan Experience",
+      "description": "The Joe Rogan Experience podcast ",
+      "thumbnailUrl": "https://i.ytimg.com/vi/RcYjXbSJBN8/hqdefault.jpg"
+    }
   ]
 }
