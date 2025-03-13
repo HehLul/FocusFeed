@@ -193,13 +193,15 @@ export default function ChannelSetup() {
       return;
     }
 
+    // Store selected channels in localStorage to retrieve them on the signup page
+    localStorage.setItem("selectedChannels", JSON.stringify(selectedChannels));
+
     // Show enhanced loading screen for 2 seconds
     setIsCurating(true);
 
-    // After 2 seconds, show signup modal
+    // After 2 seconds, redirect to signup page
     setTimeout(() => {
-      setIsCurating(false);
-      setShowSignup(true);
+      router.push("/signup");
     }, 2000);
   };
 
@@ -599,13 +601,6 @@ export default function ChannelSetup() {
 
       {/* Curating Feed Loading Animation */}
       {isCurating && <EnhancedLoadingScreen />}
-
-      {/* Signup Modal */}
-      <SignupModal
-        isOpen={showSignup}
-        onClose={() => setShowSignup(false)}
-        onSuccess={handleSignupSuccess}
-      />
     </div>
   );
 }
