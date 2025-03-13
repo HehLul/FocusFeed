@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import SignupModal from "../../components/SignupModal";
 import LoadingFeedAnimation from "../../components/LoadingFeedAnimation";
 import { supabase } from "../../utils/supabase";
+import EnhancedLoadingScreen from "@/components/common/EnhancedLoadingScreen";
 
 // Category data
 const categories = [
@@ -27,16 +28,11 @@ const categories = [
   },
 ];
 
-// Import categoryChannels from a JSON file in your project
-// This would be the actual import in your code:
-// import categoryChannels from '../../data/categoryChannels.json';
-
-// For this example, I'm including a sample of what the JSON structure would look like
-// Using direct image URLs with protocol and correct domain
 import categoryChannels from "./categoryChannels";
 
 export default function ChannelSetup() {
   const router = useRouter();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [selectedChannels, setSelectedChannels] = useState([]);
@@ -197,14 +193,14 @@ export default function ChannelSetup() {
       return;
     }
 
-    // Show curating animation for 4 seconds
+    // Show enhanced loading screen for 2 seconds
     setIsCurating(true);
 
-    // After 4 seconds, show signup modal
+    // After 2 seconds, show signup modal
     setTimeout(() => {
       setIsCurating(false);
       setShowSignup(true);
-    }, 4000);
+    }, 2000);
   };
 
   const handleSignupSuccess = async (user) => {
@@ -602,7 +598,7 @@ export default function ChannelSetup() {
       </div>
 
       {/* Curating Feed Loading Animation */}
-      {isCurating && <LoadingFeedAnimation />}
+      {isCurating && <EnhancedLoadingScreen />}
 
       {/* Signup Modal */}
       <SignupModal
