@@ -1,3 +1,4 @@
+// components/feed/VideoCard.jsx
 import { Video } from "lucide-react";
 
 export default function VideoCard({
@@ -10,7 +11,7 @@ export default function VideoCard({
     video?.thumbnail || video?.thumbnail_url || "/default-thumbnail.png";
 
   return (
-    <div className="flex gap-4 p-4 hover:bg-gray-800/50 rounded-lg transition-colors">
+    <div className="flex gap-4 p-4 hover:bg-gray-800/50 rounded-lg transition-colors border border-gray-800 hover:border-green-500">
       {/* Thumbnail */}
       <div className="relative flex-shrink-0 w-48 h-27 bg-gray-900 rounded overflow-hidden">
         {showPlaylistNumber && (

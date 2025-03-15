@@ -101,16 +101,13 @@ export default function FeedPage() {
     };
   }, [router]);
 
-  // Load featured playlists
-  // Updated loadFeaturedPlaylists function
-
-  // Helper function to generate a proxied thumbnail URL
   // Helper function to generate a proxied thumbnail URL
   const getProxiedThumbnailUrl = (videoId) => {
     if (!videoId) return "/default-thumbnail.png";
-    return `/api/thumbnail/${videoId}`; // Make sure this is the correct path
+    return `/api/thumbnail/${videoId}`;
   };
-  // Updated version of loadFeaturedPlaylists to use proxied thumbnails
+
+  // Load featured playlists
   const loadFeaturedPlaylists = async () => {
     try {
       const {
@@ -377,12 +374,6 @@ export default function FeedPage() {
     }
   };
 
-  // Handle playlist creation
-  // Replace your current handleCreatePlaylist with this:
-
-  // Helper function to extract video ID from URL
-  // Updated handleCreatePlaylist function
-  // Updated handleCreatePlaylist function to use proxied thumbnails
   // Helper to ensure thumbnail URLs are in the correct format
   const ensureThumbnailUrl = (video) => {
     // If the video already has a thumbnail property, use it
@@ -570,6 +561,7 @@ export default function FeedPage() {
       return null;
     }
   };
+
   const handlePlaylistClick = (playlistId) => {
     router.push(`/playlist/${playlistId}`);
   };
@@ -596,7 +588,7 @@ export default function FeedPage() {
         <p className="mb-6">{error}</p>
         <button
           onClick={() => router.push("/")}
-          className="px-4 py-2 bg-white text-black rounded"
+          className="px-4 py-2 bg-green-500 hover:bg-green-600 transition-colors text-white rounded"
         >
           Return to Home
         </button>
@@ -614,7 +606,9 @@ export default function FeedPage() {
 
       {/* Feed content */}
       <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        <h2 className="text-2xl font-bold mb-6">Your Focused Feed</h2>
+        <h2 className="text-2xl font-bold mb-6">
+          Your <span className="text-green-400">Focused Feed</span>
+        </h2>
 
         {/* Playlists Section */}
         <PlaylistSection

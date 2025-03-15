@@ -1,63 +1,69 @@
 // components/common/FeedHeader.jsx
-"use client";
-
-import { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import SettingsDropdown from "./SettingsDropdown";
 
-export default function FeedHeader({ title, showSettingsIcon = true }) {
-  const [user, setUser] = useState(null);
-  const supabase = createClientComponentClient();
+const FeedHeader = ({ userEmail, onSignOut }) => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  useEffect(() => {
-    async function getUser() {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session) {
-        setUser(session.user);
-      }
-    }
-    getUser();
-  }, [supabase]);
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    window.location.href = "/";
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
   };
 
   return (
-    <header className="bg-black border-b border-gray-800">
-      <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
-        <div className="flex items-center">
-          <Link href="/feed" className="text-xl font-bold text-white">
-            FocusFeed
+    <header className="bg-gray-900 shadow-md">
+      <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center">
+          {/* Logo and title */}
+          <Link href="/feed" className="flex items-center">
+            <h1 className="text-xl font-bold mr-2">
+              <span className="text-green-400">Focus</span>Feed
+            </h1>
           </Link>
-          {title && (
-            <>
-              <span className="mx-2 text-gray-500">/</span>
-              <h1 className="text-lg font-medium text-gray-300">{title}</h1>
-            </>
-          )}
-        </div>
 
-        <div className="flex items-center gap-4">
-          {showSettingsIcon && <SettingsDropdown />}
-
-          {user && (
-            <>
-              <span className="text-sm text-gray-300">{user.email}</span>
-              <button
-                onClick={handleSignOut}
-                className="text-sm text-red-400 hover:text-red-300"
+          {/* User menu */}
+          <div className="relative">
+            <button
+              onClick={toggleMenu}
+              className="flex items-center text-sm px-3 py-1.5 rounded-full border border-green-500 text-green-400 hover:bg-gray-800 transition-colors"
+            >
+              <span className="mr-1 truncate max-w-[150px]">{userEmail}</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className={`h-4 w-4 transition-transform duration-200 ${
+                  isMenuOpen ? "rotate-180" : ""
+                }`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
               >
-                Sign Out
-              </button>
-            </>
-          )}
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
+
+            {/* Dropdown menu */}
+            {isMenuOpen && (
+              <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-gray-900 ring-1 ring-black ring-opacity-5 z-10 border border-gray-800">
+                <div className="py-1" role="menu" aria-orientation="vertical">
+                  <button
+                    onClick={onSignOut}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+                    role="menuitem"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </header>
   );
-}
+};
+
+export default FeedHeader;
