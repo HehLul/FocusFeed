@@ -8,24 +8,28 @@ import LoadingFeedAnimation from "@/components/LoadingFeedAnimation";
 // Import components
 import FeedHeader from "@/components/common/FeedHeader";
 import DebugSession from "@/components/common/DebugSession";
-import PlaylistSection from "@/components/feed/PlaylistSection";
+import CollectionSection from "@/components/feed/CollectionSection";
 import FeedTabs from "@/components/feed/FeedTabs";
 import VideoSection from "@/components/feed/VideoSection";
-import CreatePlaylistModal from "@/components/feed/CreatePlaylistModal";
-import VideoCard from "@/components/feed/VideoCard";
+import CreateCollectionModal from "@/components/feed/CreateCollectionModal";
+
+// Import helper for featured collections
+import { getFeaturedCollections } from "@/utils/featuredCollections";
 
 export default function FeedPage() {
   const [user, setUser] = useState(null);
   const [userFeed, setUserFeed] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState("latest");
+  const [activeMainTab, setActiveMainTab] = useState("feed"); // "feed" or "collections"
+  const [activeFeedTab, setActiveFeedTab] = useState("latest"); // "latest" or "top"
   const [videos, setVideos] = useState({ latest: [], top: [] });
   const [videoLoading, setVideoLoading] = useState(false);
 
-  // Playlists state
-  const [playlists, setPlaylists] = useState([]);
-  const [showCreatePlaylistModal, setShowCreatePlaylistModal] = useState(false);
+  // Collections state
+  const [collections, setCollections] = useState([]);
+  const [showCreateCollectionModal, setShowCreateCollectionModal] =
+    useState(false);
 
   const router = useRouter();
 
@@ -56,7 +60,6 @@ export default function FeedPage() {
 
         if (!session) {
           console.log("No session, redirecting to home");
-          // Redirect with a slight delay to allow logging to complete
           setTimeout(() => {
             if (isMounted) router.push("/");
           }, 100);
@@ -83,8 +86,11 @@ export default function FeedPage() {
           setUserFeed(feedData);
           setLoading(false);
 
-          // Load featured playlists
-          loadFeaturedPlaylists();
+          // Load collections and videos
+          loadCollections();
+          if (feedData?.channels && feedData.channels.length > 0) {
+            fetchVideos();
+          }
         }
       } catch (error) {
         console.error("Error in feed page:", error);
@@ -107,22 +113,27 @@ export default function FeedPage() {
     return `/api/thumbnail/${videoId}`;
   };
 
-  // Load featured playlists
-  const loadFeaturedPlaylists = async () => {
+  // Load user collections and add featured collections
+  const loadCollections = async () => {
     try {
       const {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Fetch playlists with their videos
-      const { data: playlistData, error: playlistError } = await supabase
+      // Get the featured collections
+      const featuredCollections = getFeaturedCollections();
+
+      // Fetch user collections (from playlists table)
+      const { data: collectionData, error: collectionError } = await supabase
         .from("playlists")
         .select(
           `
           id,
           title,
           description,
+          purpose,
+          purpose_description,
           created_at,
           playlist_videos (
             position,
@@ -138,12 +149,12 @@ export default function FeedPage() {
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
-      if (playlistError) throw playlistError;
+      if (collectionError) throw collectionError;
 
       // Transform the data
-      const transformedPlaylists = playlistData.map((playlist) => {
-        // Sort playlist videos by position
-        const sortedVideos = [...playlist.playlist_videos].sort(
+      const transformedCollections = collectionData.map((collection) => {
+        // Sort collection videos by position
+        const sortedVideos = [...collection.playlist_videos].sort(
           (a, b) => a.position - b.position
         );
 
@@ -160,32 +171,33 @@ export default function FeedPage() {
           .slice(0, 4);
 
         console.log(
-          `Playlist "${playlist.title}" has ${thumbnails.length} direct thumbnails:`,
+          `Collection "${collection.title}" has ${thumbnails.length} direct thumbnails:`,
           thumbnails
         );
 
         return {
-          id: playlist.id,
-          name: playlist.title,
-          description: playlist.description,
-          videoCount: playlist.playlist_videos.length,
+          id: collection.id,
+          name: collection.title,
+          description: collection.description,
+          purpose: collection.purpose || null,
+          purposeDescription: collection.purpose_description || null,
+          videoCount: collection.playlist_videos.length,
           thumbnails: thumbnails,
-          featured: false,
+          featured: false, // User's own collections
         };
       });
 
-      setPlaylists(transformedPlaylists);
+      // Combine with featured collections
+      const allCollections = [
+        ...featuredCollections, // Add featured collections first
+        ...transformedCollections, // Then user collections
+      ];
+
+      setCollections(allCollections);
     } catch (error) {
-      console.error("Error loading playlists:", error);
+      console.error("Error loading collections:", error);
     }
   };
-
-  // Fetch videos when userFeed is loaded
-  useEffect(() => {
-    if (userFeed?.channels && userFeed.channels.length > 0) {
-      fetchVideos();
-    }
-  }, [userFeed]);
 
   const fetchVideos = async () => {
     if (!userFeed?.channels || userFeed.channels.length === 0) return;
@@ -242,18 +254,6 @@ export default function FeedPage() {
 
             // Sort all videos by date, regardless of channel
             data.videos.sort((a, b) => b.parsedDate - a.parsedDate);
-
-            // Log the dates of the first few videos to verify sorting
-            console.log("Latest videos sorted by date:");
-            data.videos.slice(0, 3).forEach((video, index) => {
-              console.log(
-                `${index + 1}. ${
-                  video.title
-                } - ${video.parsedDate.toISOString()} - ${
-                  video.channel_title || video.channelTitle
-                }`
-              );
-            });
           }
 
           return data;
@@ -308,16 +308,6 @@ export default function FeedPage() {
               const viewCountB = parseInt(b.viewCount || b.view_count || 0);
               return viewCountB - viewCountA;
             });
-
-            // Log the top videos by view count
-            console.log("Top videos sorted by view count:");
-            data.videos.slice(0, 3).forEach((video, index) => {
-              console.log(
-                `${index + 1}. ${video.title} - ${
-                  video.viewCount || video.view_count
-                } views - ${video.channel_title || video.channelTitle}`
-              );
-            });
           }
 
           return data;
@@ -333,18 +323,6 @@ export default function FeedPage() {
         fetchLatestVideos(),
         fetchTopVideos(),
       ]);
-
-      // Debug what's coming back
-      if (latestData.status === "fulfilled") {
-        console.log(
-          "Latest videos sample:",
-          latestData.value.videos.slice(0, 2)
-        );
-      }
-
-      if (topData.status === "fulfilled") {
-        console.log("Top videos sample:", topData.value.videos.slice(0, 2));
-      }
 
       // Process results, handling any failures
       setVideos({
@@ -374,58 +352,37 @@ export default function FeedPage() {
     }
   };
 
-  // Helper to ensure thumbnail URLs are in the correct format
-  const ensureThumbnailUrl = (video) => {
-    // If the video already has a thumbnail property, use it
-    if (video.thumbnail) return video;
-
-    // If it has a thumbnail_url, convert it to the thumbnail property
-    if (video.thumbnail_url) {
-      video.thumbnail = video.thumbnail_url;
-      return video;
-    }
-
-    // If it has a video_id or id, generate a YouTube thumbnail URL
-    if (video.video_id || video.id) {
-      const videoId = video.video_id || video.id;
-      video.thumbnail = `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`;
-      return video;
-    }
-
-    // Fallback to default thumbnail
-    video.thumbnail = "/default-thumbnail.png";
-    return video;
-  };
-
-  const handleCreatePlaylist = async (playlistData) => {
+  const handleCreateCollection = async (collectionData) => {
     try {
       const {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
-      // First, create the playlist
-      const { data: playlist, error: playlistError } = await supabase
-        .from("playlists")
+      // First, create the collection
+      const { data: collection, error: collectionError } = await supabase
+        .from("playlists") // Keep using the playlists table for now
         .insert({
           user_id: user.id,
-          title: playlistData.name,
-          description: playlistData.description,
+          title: collectionData.name,
+          description: collectionData.description,
+          purpose: collectionData.purpose || null,
+          purpose_description: collectionData.purposeDescription || null,
         })
         .select()
         .single();
 
-      if (playlistError) throw playlistError;
+      if (collectionError) throw collectionError;
 
       // Arrays to store video data
       const videoIds = [];
       const videoThumbnails = [];
 
-      // If videos were provided, add them to the playlist
-      if (playlistData.videoUrls && playlistData.videoUrls.length > 0) {
+      // If videos were provided, add them to the collection
+      if (collectionData.videoUrls && collectionData.videoUrls.length > 0) {
         // Extract all valid video IDs
-        for (let i = 0; i < playlistData.videoUrls.length; i++) {
-          const videoUrl = playlistData.videoUrls[i];
+        for (let i = 0; i < collectionData.videoUrls.length; i++) {
+          const videoUrl = collectionData.videoUrls[i];
           const videoId = extractVideoId(videoUrl);
 
           if (videoId) {
@@ -457,14 +414,14 @@ export default function FeedPage() {
             const { error: playlistVideoError } = await supabase
               .from("playlist_videos")
               .insert({
-                playlist_id: playlist.id,
+                playlist_id: collection.id,
                 video_id: videoId,
                 position: i,
               });
 
             if (playlistVideoError)
               console.error(
-                "Error adding video to playlist:",
+                "Error adding video to collection:",
                 playlistVideoError
               );
           }
@@ -515,23 +472,31 @@ export default function FeedPage() {
         }
       }
 
-      // Add the new playlist to state with thumbnails
-      const newPlaylist = {
-        id: playlist.id,
-        name: playlist.title,
-        description: playlist.description,
+      // Add the new collection to state with thumbnails
+      const newCollection = {
+        id: collection.id,
+        name: collection.title,
+        description: collection.description,
+        purpose: collectionData.purpose || null,
+        purposeDescription: collectionData.purposeDescription || null,
         videoCount: videoIds.length,
         thumbnails: videoThumbnails.slice(0, 4),
         featured: false,
       };
 
-      setPlaylists((prev) => [newPlaylist, ...prev]);
-      setShowCreatePlaylistModal(false);
+      setCollections((prev) => [
+        newCollection,
+        ...prev.filter((c) => c.featured),
+      ]);
+      setShowCreateCollectionModal(false);
+
+      // Switch to collections tab after creating a new collection
+      setActiveMainTab("collections");
 
       return true;
     } catch (error) {
-      console.error("Error creating playlist:", error);
-      alert("Failed to create playlist. Please try again.");
+      console.error("Error creating collection:", error);
+      alert("Failed to create collection. Please try again.");
       return false;
     }
   };
@@ -562,8 +527,21 @@ export default function FeedPage() {
     }
   };
 
-  const handlePlaylistClick = (playlistId) => {
-    router.push(`/playlist/${playlistId}`);
+  const handleCollectionClick = (collectionId) => {
+    // For featured collections, we may want to handle differently
+    const collection = collections.find((c) => c.id === collectionId);
+
+    if (collection && collection.featured) {
+      // For featured collections, we might want to copy them to the user's collections first
+      // Or we could just display the videos directly
+      console.log("Clicked featured collection:", collection);
+
+      // For now, we'll just go to the collection view (to be implemented)
+      router.push(`/collection/${collectionId}`);
+    } else {
+      // For user collections, use the existing playlist route (to be renamed)
+      router.push(`/playlist/${collectionId}`);
+    }
   };
 
   const handleSignOut = async () => {
@@ -610,36 +588,72 @@ export default function FeedPage() {
           Your <span className="text-green-400">Focused Feed</span>
         </h2>
 
-        {/* Playlists Section */}
-        <PlaylistSection
-          playlists={playlists}
-          onCreatePlaylist={() => setShowCreatePlaylistModal(true)}
-          onPlaylistClick={handlePlaylistClick}
-        />
+        {/* Main Tabs (Collections / Feed) */}
+        <div className="border-b border-gray-800 mb-8">
+          <div className="flex space-x-8">
+            <button
+              onClick={() => setActiveMainTab("feed")}
+              className={`pb-4 px-1 ${
+                activeMainTab === "feed"
+                  ? "border-b-2 border-green-500 text-green-400 font-medium"
+                  : "text-gray-400 hover:text-gray-300"
+              }`}
+            >
+              Feed
+            </button>
+            <button
+              onClick={() => setActiveMainTab("collections")}
+              className={`pb-4 px-1 ${
+                activeMainTab === "collections"
+                  ? "border-b-2 border-green-500 text-green-400 font-medium"
+                  : "text-gray-400 hover:text-gray-300"
+              }`}
+            >
+              Collections
+            </button>
+          </div>
+        </div>
 
-        {/* Tabs for Latest and Top videos */}
-        <FeedTabs
-          activeTab={activeTab}
-          onTabChange={(tab) => setActiveTab(tab)}
-        />
+        {/* Conditional content based on active tab */}
+        {activeMainTab === "collections" ? (
+          /* Collections Tab Content */
+          <CollectionSection
+            collections={collections}
+            onCreateCollection={() => setShowCreateCollectionModal(true)}
+            onCollectionClick={handleCollectionClick}
+          />
+        ) : (
+          /* Feed Tab Content */
+          <>
+            {/* Tabs for Latest and Top videos */}
+            <div className="mb-6">
+              <FeedTabs
+                activeTab={activeFeedTab}
+                onTabChange={(tab) => setActiveFeedTab(tab)}
+              />
+            </div>
 
-        {/* Video Display */}
-        <VideoSection
-          title={activeTab === "latest" ? "Latest Videos" : "Top Videos"}
-          videos={videos[activeTab]}
-          isLoading={videoLoading}
-          onRefresh={fetchVideos}
-        />
+            {/* Video Display */}
+            <VideoSection
+              title={
+                activeFeedTab === "latest" ? "Latest Videos" : "Top Videos"
+              }
+              videos={videos[activeFeedTab]}
+              isLoading={videoLoading}
+              onRefresh={fetchVideos}
+            />
+          </>
+        )}
 
         {/* Debug section - remove in production */}
         {process.env.NODE_ENV !== "production" && <DebugSession />}
       </main>
 
-      {/* Create Playlist Modal */}
-      <CreatePlaylistModal
-        isOpen={showCreatePlaylistModal}
-        onClose={() => setShowCreatePlaylistModal(false)}
-        onSubmit={handleCreatePlaylist}
+      {/* Create Collection Modal */}
+      <CreateCollectionModal
+        isOpen={showCreateCollectionModal}
+        onClose={() => setShowCreateCollectionModal(false)}
+        onSubmit={handleCreateCollection}
       />
     </div>
   );
